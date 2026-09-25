@@ -1,0 +1,142 @@
+name: Deploy LiveTube TV portal to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "portal/**"
+      - "data/channels.json"
+      - ".github/workflows/deploy-portal.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Validate and deploy portal
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Validate and stage the portal artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          from urllib.parse import urlparse
+          import re
+          import shutil
+
+          portal = Path("portal")
+          required = [portal / "index.html", portal / "style.css", portal / "app.js"]
+          missing = [str(path) for path in required if not path.is_file()]
+          if missing:
+              raise SystemExit("Missing portal files: " + ", ".join(missing))
+
+          class ReferenceParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.references = []
+
+              def handle_starttag(self, tag, attrs):
+                  values = dict(attrs)
+                  for attribute in ("href", "src"):
+                      value = values.get(attribute)
+                      if value:
+                          self.references.append((tag, attribute, value))
+
+          parser = ReferenceParser()
+          parser.feed((portal / "index.html").read_text(encoding="utf-8"))
+          for tag, attribute, value in parser.references:
+              parsed = urlparse(value)
+              if parsed.scheme or parsed.netloc or value.startswith(("#", "/", "data:")):
+                  continue
+              target = (portal / parsed.path).resolve()
+              if not target.is_file():
+                  raise SystemExit(f"Broken local {tag} {attribute} reference in portal/index.html: {value}")
+
+          css = (portal / "style.css").read_text(encoding="utf-8")
+          for value in re.findall(r"url\(\s*['\"]?([^)'\"]+)", css):
+              parsed = urlparse(value)
+              if parsed.scheme or parsed.netloc or value.startswith(("#", "/", "data:")):
+                  continue
+              target = (portal / parsed.path).resolve()
+              if not target.is_file():
+                  raise SystemExit(f"Broken local CSS reference in portal/style.css: {value}")
+
+          app_js = (portal / "app.js").read_text(encoding="utf-8")
+          catalogue_paths = re.search(r"const LOCAL_CATALOGUE_URLS = \[(.*?)\]", app_js, re.S)
+          if not catalogue_paths:
+              raise SystemExit("portal/app.js does not declare LOCAL_CATALOGUE_URLS")
+          for value in re.findall(r"['\"]([^'\"]+)['\"]", catalogue_paths.group(1)):
+              if value == "../data/channels.json":
+                  target = Path("data/channels.json")
+              elif value == "data/channels.json":
+                  target = portal / value
+              else:
+                  raise SystemExit(f"Unexpected local catalogue path: {value}")
+              if not target.is_file():
+                  raise SystemExit(f"Broken local catalogue reference: {value}")
+
+          # The Pages artifact is the portal site root. The data file is the
+          # existing public catalogue copy used as the portal's offline fallback;
+          # no Android sources, build outputs, or repository metadata are copied.
+          stage = Path(".pages-site")
+          if stage.exists():
+              shutil.rmtree(stage)
+          shutil.copytree(portal, stage)
+          (stage / "data").mkdir()
+          shutil.copy2("data/channels.json", stage / "data" / "channels.json")
+
+          artifact_required = [
+              stage / "index.html",
+              stage / "style.css",
+              stage / "app.js",
+              stage / "data" / "channels.json",
+          ]
+          missing_artifact = [str(path) for path in artifact_required if not path.is_file()]
+          if missing_artifact:
+              raise SystemExit("Staged Pages artifact is incomplete: " + ", ".join(missing_artifact))
+          if (stage / "app").exists() or (stage / ".git").exists() or (stage / "build").exists():
+              raise SystemExit("Pages artifact contains files outside the portal site")
+          print("Portal validation passed; staged artifact root contains index.html, style.css, app.js, and data/channels.json.")
+          PY
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .pages-site
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Write deployment summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## LiveTube TV portal"
+            echo "- Source: \`portal/\`"
+            echo "- Pages URL: ${{ steps.deployment.outputs.page_url }}"
+            echo "- Artifact root: \`index.html\`, \`style.css\`, \`app.js\`, and \`data/channels.json\`"
+          } >> "$GITHUB_STEP_SUMMARY"

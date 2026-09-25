@@ -2,7 +2,7 @@
 
 const API_ORIGIN = "https://api.github.com";
 const CATALOGUE_PATH = "data/channels.json";
-const LOCAL_CATALOGUE_URL = "../data/channels.json";
+const LOCAL_CATALOGUE_URLS = ["../data/channels.json", "data/channels.json"];
 const TOKEN_STORAGE_KEY = "livetubetv.githubToken";
 const REPOSITORY_STORAGE_KEY = "livetubetv.repository";
 const SCHEMA_VERSION = 2;
@@ -819,24 +819,29 @@ async function loadPublishedCatalogueFallback() {
 }
 
 async function loadLocalCatalogue() {
-  try {
-    const response = await fetch(LOCAL_CATALOGUE_URL, { cache: "no-cache", credentials: "omit" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const document = validateCatalogue(await response.json());
-    adoptDocument(document);
-    renderTable();
-    showNotice(`Loaded ${document.channels.length} channels from the bundled catalogue.`);
-  } catch (localError) {
+  for (const url of LOCAL_CATALOGUE_URLS) {
     try {
-      const document = await loadPublishedCatalogueFallback();
+      const response = await fetch(url, { cache: "no-cache", credentials: "omit" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const document = validateCatalogue(await response.json());
       adoptDocument(document);
       renderTable();
-      showNotice(`Loaded ${document.channels.length} channels from the public GitHub catalogue.`);
-    } catch (remoteError) {
-      state.channels = [];
-      renderTable();
-      showNotice(`Could not load the catalogue: ${remoteError.message}`, "error");
+      showNotice(`Loaded ${document.channels.length} channels from the bundled catalogue.`);
+      return;
+    } catch (_) {
+      // Try the next local path before falling back to the configured GitHub raw URL.
     }
+  }
+
+  try {
+    const document = await loadPublishedCatalogueFallback();
+    adoptDocument(document);
+    renderTable();
+    showNotice(`Loaded ${document.channels.length} channels from the public GitHub catalogue.`);
+  } catch (remoteError) {
+    state.channels = [];
+    renderTable();
+    showNotice(`Could not load the catalogue: ${remoteError.message}`, "error");
   }
 }
 
