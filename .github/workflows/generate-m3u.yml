@@ -1,0 +1,127 @@
+name: Generate M3U
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "data/channels.json"
+      - "scripts/build_m3u.py"
+      - "scripts/validate_channels.py"
+      - ".github/workflows/generate-m3u.yml"
+  pull_request:
+    paths:
+      - "data/channels.json"
+      - "data/playlist.m3u8"
+      - "scripts/build_m3u.py"
+      - "scripts/validate_channels.py"
+      - ".github/workflows/generate-m3u.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m3u-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate and render
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    outputs:
+      can-commit: ${{ steps.mode.outputs.can_commit }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Select write mode
+        id: mode
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if { [ "$EVENT_NAME" = "push" ] || [ "$EVENT_NAME" = "workflow_dispatch" ]; } && [ "$REF" = "refs/heads/$DEFAULT_BRANCH" ]; then
+            echo "can_commit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "can_commit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate strict channel schema
+        run: python scripts/validate_channels.py data/channels.json
+
+      - name: Generate playlist
+        run: python scripts/build_m3u.py --quiet
+
+      - name: Require a committed generated playlist
+        if: ${{ steps.mode.outputs.can_commit != 'true' }}
+        run: |
+          if ! git diff --quiet -- data/playlist.m3u8; then
+            echo "::error::data/playlist.m3u8 is stale. Run python scripts/build_m3u.py and commit it."
+            git diff -- data/playlist.m3u8
+            exit 1
+          fi
+
+  commit:
+    name: Commit deterministic playlist
+    needs: prepare
+    if: ${{ needs.prepare.outputs.can-commit == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out trusted default branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Build, commit, and race-safely push
+        env:
+          TARGET_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          python scripts/validate_channels.py data/channels.json
+          python scripts/build_m3u.py --quiet
+
+          if git diff --quiet -- data/playlist.m3u8; then
+            echo "Playlist is already current."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- data/playlist.m3u8
+          git commit -m "chore(data): regenerate M3U playlist"
+
+          # Rebase if the branch advanced while this trusted workflow was running.
+          # Regenerate afterwards so the committed artifact is always based on the
+          # final source. A rebase conflict fails closed and never force-pushes.
+          git fetch --no-tags origin "$TARGET_BRANCH"
+          if ! git merge-base --is-ancestor "origin/$TARGET_BRANCH" HEAD; then
+            git rebase "origin/$TARGET_BRANCH"
+            python scripts/build_m3u.py --quiet
+            git add -- data/playlist.m3u8
+            if ! git diff --cached --quiet -- data/playlist.m3u8; then
+              git commit --amend --no-edit
+            fi
+          fi
+
+          git push origin "HEAD:$TARGET_BRANCH"

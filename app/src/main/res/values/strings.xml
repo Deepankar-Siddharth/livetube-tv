@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">LiveTube TV</string>
+    <string name="app_description">A remote-friendly YouTube live television guide for Android TV.</string>
+    <string name="default_channel_name">LiveTube TV</string>
+    <string name="loading_channels">Loading channel guide…</string>
+    <string name="no_channels">No enabled channels are available. Check the GitHub configuration or add channels in the portal.</string>
+    <string name="offline">Offline mode: using the last saved channel guide.</string>
+    <string name="about">About LiveTube TV</string>
+    <string name="close">Close</string>
+    <string name="later">Later</string>
+    <string name="update">Update</string>
+    <string name="exit_title">Exit LiveTube TV?</string>
+    <string name="exit_message">You can return to the live guide at any time.</string>
+    <string name="exit">Exit</string>
+    <string name="stay">Stay</string>
+</resources>

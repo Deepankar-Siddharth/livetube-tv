@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "app_version": "1.0.0",
+  "newpipe_extractor_version": "0.26.5",
+  "build_date": "2026-09-25",
+  "version_code": 1000000,
+  "release_tag": "",
+  "commit_sha": "",
+  "built_at": "",
+  "apk_url": "",
+  "sha256": null,
+  "signature_sha256": null,
+  "release_notes_url": "",
+  "minimum_supported_version_code": 1,
+  "published": false,
+  "published_at": null
+}

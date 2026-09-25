@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0b1220">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self'; img-src https:; connect-src 'self' https://api.github.com https://raw.githubusercontent.com; manifest-src 'self'; worker-src 'none'"
+    >
+    <meta name="referrer" content="no-referrer">
+    <title>LiveTube TV — Channel Catalogue</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <div>
+          <p class="eyebrow">LiveTube TV</p>
+          <h1>Channel catalogue</h1>
+          <p class="subtitle">Curate the catalogue locally, then commit one conflict-safe update to GitHub.</p>
+        </div>
+        <div class="repository-state" aria-label="Repository state">
+          <span id="connectionDot" class="status-dot" aria-hidden="true"></span>
+          <span id="connectionState">Local preview</span>
+        </div>
+      </div>
+    </header>
+
+    <main id="main-content" class="page-shell">
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden>
+        <span id="noticeText"></span>
+        <button id="dismissNotice" class="icon-button" type="button" aria-label="Dismiss message">×</button>
+      </div>
+
+      <section class="dashboard" aria-label="Catalogue dashboard">
+        <article class="stat-card"><span class="stat-label">Total channels</span><strong id="statTotal">0</strong></article>
+        <article class="stat-card"><span class="stat-label">Categories</span><strong id="statCategories">0</strong></article>
+        <article class="stat-card"><span class="stat-label">Enabled</span><strong id="statEnabled">0</strong></article>
+        <article class="stat-card"><span class="stat-label">Disabled</span><strong id="statDisabled">0</strong></article>
+        <article class="stat-card stat-card-wide"><span class="stat-label">Last data update</span><strong id="statUpdated">Not loaded</strong></article>
+      </section>
+
+      <section class="panel connection-panel" aria-labelledby="connectionHeading">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">GitHub repository</p>
+            <h2 id="connectionHeading">Connect to the source of truth</h2>
+          </div>
+          <button id="clearToken" class="button button-quiet" type="button">Forget token</button>
+        </div>
+
+        <div class="form-grid repository-grid">
+          <label class="field">
+            <span>Owner</span>
+            <input id="owner" name="owner" type="text" inputmode="latin" autocomplete="username" maxlength="39" placeholder="GitHub user or organisation" required>
+          </label>
+          <label class="field">
+            <span>Repository</span>
+            <input id="repo" name="repo" type="text" inputmode="url" autocomplete="off" maxlength="100" placeholder="livetube-tv" required>
+          </label>
+          <label class="field">
+            <span>Branch</span>
+            <input id="branch" name="branch" type="text" inputmode="url" autocomplete="off" maxlength="255" value="main" required>
+          </label>
+          <label class="field token-field">
+            <span>Fine-grained token <small>(contents: read &amp; write)</small></span>
+            <input id="token" name="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="512" placeholder="github_pat_…">
+          </label>
+        </div>
+
+        <div class="security-note">
+          <span aria-hidden="true">●</span>
+          <p><strong>Your token stays in this browser.</strong> It is stored only in <code>localStorage</code>, sent only to <code>api.github.com</code> in an authorization header, and never placed in a URL, export, or commit. Use a token restricted to this repository.</p>
+        </div>
+
+        <div class="button-row">
+          <button id="fetchRemote" class="button button-secondary" type="button">Fetch from GitHub</button>
+          <button id="saveRemote" class="button button-primary" type="button" disabled>Save catalogue to GitHub</button>
+          <button id="exportCatalogue" class="button button-quiet" type="button">Export JSON</button>
+          <button id="importCatalogue" class="button button-quiet" type="button">Import JSON</button>
+          <input id="importFile" type="file" accept="application/json,.json" hidden>
+        </div>
+        <p class="fine-print">A save is one GitHub Contents API request guarded by the fetched blob SHA. A concurrent GitHub edit is never overwritten.</p>
+      </section>
+
+      <section id="editorPanel" class="panel editor-panel" aria-labelledby="editorHeading">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Catalogue entry</p>
+            <h2 id="editorHeading">Add a channel</h2>
+          </div>
+          <span id="editorMode" class="pill">New</span>
+        </div>
+
+        <form id="channelForm" novalidate>
+          <input id="editIndex" type="hidden" value="-1">
+          <div class="form-grid">
+            <label class="field">
+              <span>Name</span>
+              <input id="channelName" type="text" maxlength="100" autocomplete="off" required>
+              <small>1–100 characters</small>
+            </label>
+            <label class="field">
+              <span>Stable ID</span>
+              <input id="channelId" type="text" maxlength="64" pattern="[a-z0-9][a-z0-9_-]{0,63}" autocomplete="off" readonly required>
+              <small>Generated from the channel name</small>
+            </label>
+            <label class="field">
+              <span>Category</span>
+              <select id="channelCategory" required></select>
+            </label>
+            <label class="field">
+              <span>Subcategory</span>
+              <select id="channelSubcategory" required></select>
+            </label>
+            <label class="field">
+              <span>Language</span>
+              <input id="channelLanguage" type="text" maxlength="64" placeholder="Hindi" autocomplete="off" required>
+            </label>
+            <label class="field">
+              <span>Region</span>
+              <input id="channelRegion" type="text" maxlength="64" placeholder="National" autocomplete="off" required>
+            </label>
+            <label class="field">
+              <span>Availability</span>
+              <select id="channelEnabled" required>
+                <option value="true">Enabled</option>
+                <option value="false">Disabled</option>
+              </select>
+              <small>Disabled channels stay in the catalogue but are hidden from the app and M3U playlist.</small>
+            </label>
+            <label class="field field-wide">
+              <span>YouTube handle or canonical live URL</span>
+              <div class="input-action">
+                <input id="channelHandle" type="text" maxlength="256" autocomplete="off" spellcheck="false" placeholder="@channel or https://www.youtube.com/@channel/live" required>
+                <button id="previewChannel" class="button button-secondary" type="button">Preview</button>
+              </div>
+              <small>Saved as <code>https://www.youtube.com/@handle/live</code></small>
+            </label>
+            <label class="field field-wide">
+              <span>HTTPS logo URL</span>
+              <input id="channelLogo" type="url" maxlength="2048" autocomplete="url" placeholder="https://example.com/logo.png" required>
+            </label>
+          </div>
+
+          <div class="form-error" id="formError" role="alert" hidden></div>
+          <div class="button-row form-actions">
+            <button class="button button-primary" type="submit">Add to catalogue</button>
+            <button id="cancelEdit" class="button button-quiet" type="button">Clear form</button>
+            <a id="canonicalPreview" class="button button-quiet" href="#" target="_blank" rel="noopener noreferrer" hidden>Open canonical URL</a>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel catalogue-panel" aria-labelledby="catalogueHeading">
+        <div class="panel-heading catalogue-heading">
+          <div>
+            <p class="section-kicker">Local working copy</p>
+            <h2 id="catalogueHeading"><span id="channelCount">0</span> channels <small id="documentMeta" class="heading-meta">data v0</small></h2>
+          </div>
+          <div class="filter-group">
+            <label class="search-field">
+              <span class="visually-hidden">Search channels</span>
+              <input id="search" type="search" maxlength="100" placeholder="Search name, category, language, or region" autocomplete="off">
+            </label>
+            <label class="category-filter">
+              <span class="visually-hidden">Filter by category</span>
+              <select id="categoryFilter">
+                <option value="">All categories</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Channel</th>
+                <th scope="col">Category</th>
+                <th scope="col">YouTube</th>
+                <th scope="col">Status</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="channelRows"></tbody>
+          </table>
+          <div id="emptyState" class="empty-state" hidden>
+            <strong>No channels found</strong>
+            <p>Change the filters or add a channel above.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>All streams link to official YouTube channels. Availability and playback are controlled by YouTube.</p>
+    </footer>
+  </body>
+</html>

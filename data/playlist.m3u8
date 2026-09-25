@@ -1,0 +1,33 @@
+#EXTM3U
+#EXTINF:-1 tvg-chno="1" tvg-id="mirror_now" tvg-logo="https://ui-avatars.com/api/?name=Mirror%20Now" group-title="News",Mirror Now
+https://www.youtube.com/@mirrornow/live
+#EXTINF:-1 tvg-chno="2" tvg-id="aaj_tak" tvg-logo="https://ui-avatars.com/api/?name=Aaj%20Tak" group-title="News",Aaj Tak
+https://www.youtube.com/@aajtak/live
+#EXTINF:-1 tvg-chno="3" tvg-id="ndtv" tvg-logo="https://ui-avatars.com/api/?name=NDTV" group-title="News",NDTV
+https://www.youtube.com/@ndtv/live
+#EXTINF:-1 tvg-chno="4" tvg-id="india_today" tvg-logo="https://ui-avatars.com/api/?name=India%20Today" group-title="News",India Today
+https://www.youtube.com/@indiatoday/live
+#EXTINF:-1 tvg-chno="5" tvg-id="republic_world" tvg-logo="https://ui-avatars.com/api/?name=Republic%20World" group-title="News",Republic World
+https://www.youtube.com/@republicworld/live
+#EXTINF:-1 tvg-chno="6" tvg-id="zee_news" tvg-logo="https://ui-avatars.com/api/?name=Zee%20News" group-title="News",Zee News
+https://www.youtube.com/@zeenews/live
+#EXTINF:-1 tvg-chno="7" tvg-id="abp_news" tvg-logo="https://ui-avatars.com/api/?name=ABP%20News" group-title="News",ABP News
+https://www.youtube.com/@abpnews/live
+#EXTINF:-1 tvg-chno="8" tvg-id="india_tv" tvg-logo="https://ui-avatars.com/api/?name=India%20TV" group-title="News",India TV
+https://www.youtube.com/@indiatv/live
+#EXTINF:-1 tvg-chno="9" tvg-id="news18_india" tvg-logo="https://ui-avatars.com/api/?name=News18%20India" group-title="News",News18 India
+https://www.youtube.com/@news18India/live
+#EXTINF:-1 tvg-chno="10" tvg-id="times_now" tvg-logo="https://ui-avatars.com/api/?name=Times%20Now" group-title="News",Times Now
+https://www.youtube.com/@TimesNow/live
+#EXTINF:-1 tvg-chno="11" tvg-id="wion" tvg-logo="https://ui-avatars.com/api/?name=WION" group-title="News",WION
+https://www.youtube.com/@WION/live
+#EXTINF:-1 tvg-chno="12" tvg-id="cnn_news18" tvg-logo="https://ui-avatars.com/api/?name=CNN-News18" group-title="News",CNN-News18
+https://www.youtube.com/@cnnnews18/live
+#EXTINF:-1 tvg-chno="13" tvg-id="republic_bharat" tvg-logo="https://ui-avatars.com/api/?name=Republic%20Bharat" group-title="News",Republic Bharat
+https://www.youtube.com/@RepublicBharat/live
+#EXTINF:-1 tvg-chno="14" tvg-id="zee_business" tvg-logo="https://ui-avatars.com/api/?name=Zee%20Business" group-title="News",Zee Business
+https://www.youtube.com/@zeebusiness/live
+#EXTINF:-1 tvg-chno="15" tvg-id="tv9_bharatvarsh" tvg-logo="https://ui-avatars.com/api/?name=TV9%20Bharatvarsh" group-title="News",TV9 Bharatvarsh
+https://www.youtube.com/@TV9Bharatvarsh/live
+#EXTINF:-1 tvg-chno="16" tvg-id="et_now" tvg-logo="https://ui-avatars.com/api/?name=ET%20Now" group-title="News",ET Now
+https://www.youtube.com/@ETNow/live

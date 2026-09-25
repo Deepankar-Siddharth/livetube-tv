@@ -1,0 +1,42 @@
+# Android/Gradle
+.gradle/
+.kotlin/
+.idea/
+*.iml
+local.properties
+/build/
+**/build/
+app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.aar
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# Temporary local brand source; Android resources are self-contained.
+/logo/
+/logo_backup/
+
+# Secrets and local configuration
+.env
+.env.*
+*.secret
+secrets.properties
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Node/editor
+node_modules/
+.DS_Store
+Thumbs.db

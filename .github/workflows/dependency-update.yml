@@ -1,0 +1,266 @@
+name: Update NewPipeExtractor
+
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Optional compatible stable target, for example v0.26.6"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: livetube-newpipeextractor-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Test, version, and release a compatible dependency update
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    environment: release
+    steps:
+      - name: Check out default branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Query upstream and apply a compatible deterministic update
+        id: plan
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -n "${REQUESTED_VERSION:-}" ]; then
+            target="$REQUESTED_VERSION"
+          else
+            target="$(python scripts/update_dependency.py --print-latest)"
+          fi
+          normalized="${target#v}"
+          python scripts/update_dependency.py --version "$normalized" --write
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No newer compatible stable dependency is available."
+          else
+            git diff --check
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$normalized" >> "$GITHUB_OUTPUT"
+          app_version="$(sed -n 's/^app\.version=//p' gradle.properties | head -n1)"
+          test -n "$app_version"
+          echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Java 17
+        if: steps.plan.outputs.changed == 'true'
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        if: steps.plan.outputs.changed == 'true'
+        uses: gradle/actions/setup-gradle@017a9effdb900e5b5b2fddfb590a105619dca3c3 # v4.4.2
+
+      - name: Validate source and run the complete pre-release gate
+        if: steps.plan.outputs.changed == 'true'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/livetube-release.jks
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          python scripts/validate_channels.py data/channels.json
+          python -m unittest discover -s tests -v
+          : "${ANDROID_KEYSTORE_BASE64:?ANDROID_KEYSTORE_BASE64 secret is required}"
+          : "${ANDROID_KEYSTORE_PASSWORD:?ANDROID_KEYSTORE_PASSWORD secret is required}"
+          : "${ANDROID_KEY_ALIAS:?ANDROID_KEY_ALIAS secret is required}"
+          : "${ANDROID_KEY_PASSWORD:?ANDROID_KEY_PASSWORD secret is required}"
+          ANDROID_KEYSTORE_PATH="$ANDROID_KEYSTORE_PATH" python - <<'PY'
+          import base64
+          import os
+          import pathlib
+          import stat
+
+          encoded = "".join(os.environ["ANDROID_KEYSTORE_BASE64"].split())
+          try:
+              key_bytes = base64.b64decode(encoded, validate=True)
+          except Exception as exc:
+              raise SystemExit("ANDROID_KEYSTORE_BASE64 is not valid base64") from exc
+          if not key_bytes.startswith(b"PK\x03\x04"):
+              raise SystemExit("Decoded signing credentials are not a keystore archive")
+          path = pathlib.Path(os.environ["ANDROID_KEYSTORE_PATH"])
+          path.write_bytes(key_bytes)
+          path.chmod(stat.S_IREAD | stat.S_IWRITE)
+          PY
+          chmod 600 "$ANDROID_KEYSTORE_PATH"
+          ./gradlew --no-daemon --stacktrace \
+            -Pgithub.owner="$REPOSITORY_OWNER" \
+            -Pgithub.repository="$REPOSITORY_NAME" \
+            -Pgithub.branch="$DEFAULT_BRANCH" \
+            testDebugUnitTest lintDebug assembleRelease
+
+      - name: Inspect the signed APK
+        if: steps.plan.outputs.changed == 'true'
+        id: artifact
+        env:
+          EXPECTED_VERSION: ${{ steps.plan.outputs.app_version }}
+        run: |
+          set -euo pipefail
+          apk_path="$(find app/build/outputs/apk/release -type f -name '*-release.apk' -print -quit)"
+          if [ -z "$apk_path" ]; then
+            echo "::error::assembleRelease did not produce an APK"
+            exit 1
+          fi
+          apksigner_bin="$(command -v apksigner || true)"
+          if [ -z "$apksigner_bin" ]; then
+            apksigner_bin="$ANDROID_HOME/build-tools/$(ls -1 "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner"
+          fi
+          "$apksigner_bin" verify --verbose --print-certs "$apk_path" | tee "$RUNNER_TEMP/apksigner.txt"
+          grep -q "Verified using v2 scheme" "$RUNNER_TEMP/apksigner.txt"
+          if command -v apkanalyzer >/dev/null 2>&1; then
+            analyzer="$(command -v apkanalyzer)"
+          else
+            analyzer="$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer"
+          fi
+          version_name="$($analyzer manifest version-name "$apk_path")"
+          version_code="$($analyzer manifest version-code "$apk_path")"
+          if [ "$version_name" != "$EXPECTED_VERSION" ]; then
+            echo "::error::APK version $version_name does not match Gradle version $EXPECTED_VERSION"
+            exit 1
+          fi
+          sha256="$(sha256sum "$apk_path" | cut -d' ' -f1)"
+          signer_sha256="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' "$RUNNER_TEMP/apksigner.txt" | head -n1)"
+          if ! [[ "$signer_sha256" =~ ^[A-Fa-f0-9:]{95,}$ ]]; then
+            echo "::error::could not read signer certificate digest"
+            exit 1
+          fi
+          echo "apk_path=$apk_path" >> "$GITHUB_OUTPUT"
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
+          echo "sha256=$sha256" >> "$GITHUB_OUTPUT"
+          echo "signer_sha256=$signer_sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Commit, tag, and push only after tests and signing pass
+        id: commit
+        if: steps.plan.outputs.changed == 'true'
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          APP_VERSION: ${{ steps.artifact.outputs.version_name }}
+          EXTRACTOR_VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git diff --cached --check
+          git commit -m "build: update NewPipeExtractor to v$EXTRACTOR_VERSION"
+          echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          git tag "v$APP_VERSION"
+          git push origin "HEAD:$DEFAULT_BRANCH" "v$APP_VERSION"
+
+      - name: Publish the tested signed GitHub release
+        if: steps.plan.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_VERSION: ${{ steps.artifact.outputs.version_name }}
+          EXTRACTOR_VERSION: ${{ steps.plan.outputs.version }}
+          APK_PATH: ${{ steps.artifact.outputs.apk_path }}
+          SHA256: ${{ steps.artifact.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          if gh release view "v$APP_VERSION" --json url >/dev/null 2>&1; then
+            gh release upload "v$APP_VERSION" "$APK_PATH#LiveTube TV signed APK" --clobber
+          else
+            gh release create "v$APP_VERSION" "$APK_PATH#LiveTube TV signed APK" \
+              --verify-tag \
+              --title "LiveTube TV v$APP_VERSION" \
+              --notes "Automated dependency-only release. NewPipeExtractor v$EXTRACTOR_VERSION. APK SHA-256: $SHA256" \
+              --latest
+          fi
+
+      - name: Publish final machine-readable build metadata
+        if: steps.plan.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          SERVER_URL: ${{ github.server_url }}
+          SOURCE_SHA: ${{ steps.commit.outputs.commit_sha }}
+          RELEASE_TAG: v${{ steps.artifact.outputs.version_name }}
+          APP_VERSION: ${{ steps.artifact.outputs.version_name }}
+          VERSION_CODE: ${{ steps.artifact.outputs.version_code }}
+          EXTRACTOR_VERSION: ${{ steps.plan.outputs.version }}
+          APK_SHA256: ${{ steps.artifact.outputs.sha256 }}
+          SIGNER_SHA256: ${{ steps.artifact.outputs.signer_sha256 }}
+        run: |
+          set -euo pipefail
+          current_sha="$(gh api "repos/$REPOSITORY/contents/data/build-metadata.json?ref=$DEFAULT_BRANCH" --jq .sha)"
+          CURRENT_METADATA_SHA="$current_sha" python - <<'PY'
+          import base64
+          import datetime
+          import json
+          import os
+          from pathlib import Path
+
+          now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+          metadata = json.loads(Path("data/build-metadata.json").read_text(encoding="utf-8"))
+          metadata.update({
+              "app_version": os.environ["APP_VERSION"],
+              "newpipe_extractor_version": os.environ["EXTRACTOR_VERSION"].removeprefix("v"),
+              "build_date": now[:10],
+              "version_name": os.environ["APP_VERSION"],
+              "version_code": int(os.environ["VERSION_CODE"]),
+              "release_tag": os.environ["RELEASE_TAG"],
+              "commit_sha": os.environ["SOURCE_SHA"],
+              "built_at": now,
+              "apk_url": f"{os.environ['SERVER_URL']}/{os.environ['REPOSITORY']}/releases/latest/download/livetube-tv-{os.environ['APP_VERSION']}.apk",
+              "sha256": os.environ["APK_SHA256"],
+              "signature_sha256": os.environ["SIGNER_SHA256"].lower().replace(":", ""),
+              "release_notes_url": f"{os.environ['SERVER_URL']}/{os.environ['REPOSITORY']}/releases/tag/{os.environ['RELEASE_TAG']}",
+              "published": True,
+              "published_at": now,
+          })
+          request = {
+              "message": f"build: publish metadata for v{metadata['app_version']}",
+              "content": base64.b64encode((json.dumps(metadata, indent=2) + "\n").encode()).decode(),
+              "sha": os.environ["CURRENT_METADATA_SHA"],
+              "branch": os.environ["DEFAULT_BRANCH"],
+          }
+          Path(os.environ["RUNNER_TEMP"], "metadata-request.json").write_text(json.dumps(request), encoding="utf-8")
+          PY
+          gh api --method PUT "repos/$REPOSITORY/contents/data/build-metadata.json" \
+            --input "$RUNNER_TEMP/metadata-request.json" >/dev/null
+
+      - name: Remove temporary signing material
+        if: always() && steps.plan.outputs.changed == 'true'
+        run: rm -f "${{ runner.temp }}/livetube-release.jks"
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## NewPipeExtractor update"
+            if [ "${{ steps.plan.outputs.changed }}" = "true" ]; then
+              echo "- Updated and released v${{ steps.artifact.outputs.version_name }}"
+              echo "- NewPipeExtractor v${{ steps.plan.outputs.version }}"
+            else
+              echo "- No newer compatible stable release found; no APK or tag was published."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
