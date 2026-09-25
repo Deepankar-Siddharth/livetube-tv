@@ -91,7 +91,9 @@ jobs:
               if value == "../data/channels.json":
                   target = Path("data/channels.json")
               elif value == "data/channels.json":
-                  target = portal / value
+                  # This path is created inside the Pages artifact below; the
+                  # source copy is validated from the repository data file.
+                  target = Path("data/channels.json")
               else:
                   raise SystemExit(f"Unexpected local catalogue path: {value}")
               if not target.is_file():
