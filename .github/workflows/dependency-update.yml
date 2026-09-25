@@ -103,8 +103,8 @@ jobs:
               key_bytes = base64.b64decode(encoded, validate=True)
           except Exception as exc:
               raise SystemExit("ANDROID_KEYSTORE_BASE64 is not valid base64") from exc
-          if not key_bytes.startswith(b"PK\x03\x04"):
-              raise SystemExit("Decoded signing credentials are not a keystore archive")
+          if not (key_bytes.startswith(b"PK\x03\x04") or key_bytes.startswith(b"\xfe\xed\xfe\xed")):
+              raise SystemExit("Decoded signing credentials are not a supported keystore archive")
           path = pathlib.Path(os.environ["ANDROID_KEYSTORE_PATH"])
           path.write_bytes(key_bytes)
           path.chmod(stat.S_IREAD | stat.S_IWRITE)
