@@ -27,7 +27,6 @@ jobs:
       GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
       GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
       DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-      ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/livetube-release.jks
 
     steps:
       - name: Validate release tag input
@@ -87,6 +86,7 @@ jobs:
       - name: Check required signing secrets
         shell: bash
         env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/livetube-release.jks
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -134,6 +134,11 @@ jobs:
 
       - name: Build signed release APK
         shell: bash
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/livetube-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           ./gradlew --no-daemon --stacktrace assembleRelease \
@@ -227,6 +232,8 @@ jobs:
       - name: Remove signing credentials
         if: ${{ always() }}
         shell: bash
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/livetube-release.jks
         run: rm -f "$ANDROID_KEYSTORE_PATH" "$RUNNER_TEMP/apksigner.txt"
 
       - name: Write release summary
