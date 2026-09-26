@@ -1,6 +1,7 @@
 package com.livetube.tv.ui
 
 import android.view.KeyEvent
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,6 +29,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -45,6 +47,7 @@ import com.livetube.tv.player.PlayerManager
 import com.livetube.tv.update.GitHubRelease
 import com.livetube.tv.update.UpdateCheckResult
 import com.livetube.tv.util.Constants
+import com.livetube.tv.util.ExternalLinks
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 
@@ -324,7 +327,17 @@ fun MainScreen(
         )
     }
     if (showAboutDialog) {
-        AboutDialog(onDismiss = { showAboutDialog = false })
+        val context = LocalContext.current
+        AboutScreen(
+            updateResult = updateResult,
+            onOpenUrl = { url ->
+                if (!ExternalLinks.open(context, url)) {
+                    Toast.makeText(context, "No app can open this link", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onInstallUpdate = onInstallUpdate,
+            onDismiss = { showAboutDialog = false },
+        )
     }
     if (showExitDialog) {
         ExitDialog(

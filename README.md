@@ -367,7 +367,7 @@ bottom of the screen: line 1 is categories, line 2 is channels.
 - Channel OK (hold): open the channel actions (Play and Add/Remove Favorite).
 - Filter action (end of the category row): pick a subcategory for the channel row; the action
   stays highlighted while a filter is active and the choice is remembered between openings.
-- About action (end of the category row): open the About dialog.
+- About action (end of the category row): open the About screen.
 - Guide Back: close the guide, or the open dialog, first.
 - Fullscreen Back: show an exit confirmation when no guide/dialog is open.
 - Five seconds without interaction: close the guide and return to video; playback continues
@@ -377,6 +377,27 @@ bottom of the screen: line 1 is categories, line 2 is channels.
 
 The video surface remains behind the guide, and Media3 reports buffering, adaptive-resolution
 availability, and live state without inventing latency measurements.
+
+## About screen
+
+The About action opens a user-facing About screen built from the branding in
+`app/src/main/res/`. It deliberately shows no build, dependency, extraction, playback, or
+cache internals.
+
+- **Home**: LiveTube TV logo, "Watch Live TV on Android TV", plus four rows — Download Latest
+  Version, Developer, Open Source, and App Information — and a CLOSE button.
+- **Download Latest Version**: shows the current version, reuses the existing update check
+  result to offer an in-app update when a newer stable release exists, and links to the GitHub
+  Releases page.
+- **Developer**: developer name, short description, GitHub profile, and the LiveTube TV
+  repository.
+- **Open Source**: opens the LiveTube TV repository.
+- **App Information**: app version (read from `BuildConfig.VERSION_NAME`, build-type suffixes
+  are never shown), source code, license, developer, and repository.
+
+D-pad Up/Down moves between rows, OK selects, and Back returns from a sub page to About and
+closes About from the home page. External links are opened through
+`util/ExternalLinks.kt`, which reports failure instead of crashing when no browser is present.
 
 ## Troubleshooting
 

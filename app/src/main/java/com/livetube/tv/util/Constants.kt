@@ -17,6 +17,17 @@ object Constants {
     private val REPOSITORY_PART = Regex("[A-Za-z0-9_.-]+")
     private val BRANCH_PART = Regex("[A-Za-z0-9_./-]+")
 
+    /** Public project identity used by the About experience. */
+    const val PROJECT_OWNER = "Deepankar-Siddharth"
+    const val PROJECT_NAME = "livetube-tv"
+    const val GITHUB_WEB_BASE = "https://github.com"
+
+    fun ownerProfileUrl(): String = "$GITHUB_WEB_BASE/$PROJECT_OWNER"
+
+    fun projectUrl(): String = "$GITHUB_WEB_BASE/$PROJECT_OWNER/$PROJECT_NAME"
+
+    fun projectReleasesUrl(): String = "${projectUrl()}/releases"
+
     data class RepositoryConfig(
         val owner: String,
         val repository: String,

@@ -1,29 +1,21 @@
 package com.livetube.tv.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.livetube.tv.BuildConfig
-import com.livetube.tv.R
 import com.livetube.tv.update.GitHubRelease
 
 @Composable
@@ -66,38 +58,6 @@ fun UpdateDialog(
         },
         dismissButton = {
             OutlinedButton(onClick = onLater) { Text("LATER") }
-        },
-    )
-}
-
-@Composable
-fun AboutDialog(onDismiss: () -> Unit) {
-    val closeFocusRequester = rememberDialogFocusRequester()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Image(
-                painter = painterResource(R.drawable.livetube_logo),
-                contentDescription = stringResource(R.string.about),
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(128.dp),
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                Text("App version: ${BuildConfig.VERSION_NAME}")
-                Text("NewPipeExtractor: ${BuildConfig.NEWPIPE_EXTRACTOR_VERSION.removePrefix("v")}")
-                Text("Playback: Media3 adaptive live playback")
-                Text("Data source: validated channels.json with offline cache")
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier.focusRequester(closeFocusRequester),
-            ) { Text("CLOSE") }
         },
     )
 }
