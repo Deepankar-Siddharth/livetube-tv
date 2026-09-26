@@ -283,19 +283,13 @@ def _validate_channel(
                 f"{location}.category is not a supported legacy category: {stored_category}"
             ) from exc
     else:
+        # Categories and subcategories are free-form. A newer data_version may introduce new
+        # ones, and rejecting them here would block a valid catalogue from shipping, so only
+        # the text itself is checked. Everything structural below stays strict.
         category = stored_category
-        valid_categories = SUBCATEGORIES_BY_CATEGORY.keys()
-        if category not in valid_categories:
-            raise ChannelValidationError(
-                f"{location}.category must be one of: {', '.join(valid_categories)}"
-            )
         subcategory = _require_string(
             channel["subcategory"], f"{location}.subcategory", max_length=96
         )
-        if subcategory not in SUBCATEGORIES_BY_CATEGORY[category]:
-            raise ChannelValidationError(
-                f"{location}.subcategory {subcategory!r} does not belong to {category!r}"
-            )
         language = _require_string(
             channel["language"], f"{location}.language", max_length=64
         )

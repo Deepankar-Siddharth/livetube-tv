@@ -180,10 +180,15 @@ class MainActivity : ComponentActivity() {
                     if (manual) {
                         syncFeedback = when (result) {
                             is ChannelSyncResult.Updated ->
-                                ChannelSyncFeedback.Updated(result.channelCount)
+                                ChannelSyncFeedback.Updated(result.channelCount, result.dataVersion)
 
                             is ChannelSyncResult.UpToDate ->
-                                ChannelSyncFeedback.UpToDate(result.channelCount)
+                                ChannelSyncFeedback.UpToDate(result.channelCount, result.dataVersion)
+
+                            is ChannelSyncResult.KeptLocal -> ChannelSyncFeedback.KeptLocal(
+                                dataVersion = result.dataVersion,
+                                remoteDataVersion = result.remoteDataVersion,
+                            )
 
                             is ChannelSyncResult.Failed -> ChannelSyncFeedback.Failed(result.reason)
                         }

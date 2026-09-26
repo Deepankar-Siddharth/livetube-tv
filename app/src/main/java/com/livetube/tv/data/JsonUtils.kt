@@ -43,9 +43,15 @@ object JsonUtils {
         "enabled",
         "sort_order",
     )
-    val VALID_CATEGORIES = ChannelCatalog.categories
-        .filter(CategoryDefinition::sourceBacked)
-        .mapTo(linkedSetOf(), CategoryDefinition::name)
+    /*
+     * Category and subcategory names are intentionally not validated against a fixed list.
+     *
+     * The catalogue is allowed to introduce new categories at any time and the guide derives its
+     * rows from whatever the active document contains, so rejecting an unknown name here would
+     * make a valid newer document unusable and hide its channels. Everything structural is still
+     * checked: field presence, text sanity, unique ids/handles/URLs, HTTPS logos, canonical live
+     * URLs and positive sort order. The built-in taxonomy lives in ChannelCatalog.
+     */
 
     private val LEGACY_CLASSIFICATION = mapOf(
         "English News" to Classification("News", "English & Global News", "English", "National"),
@@ -165,20 +171,11 @@ object JsonUtils {
                     "channels[$index].category is not a supported legacy category: $storedCategory",
                 )
         } else {
-            if (storedCategory !in VALID_CATEGORIES) {
-                throw InvalidChannelDocumentException(
-                    "channels[$index].category is not a supported category: $storedCategory",
-                )
-            }
-            val subcategory = requiredString(json, "subcategory", 96)
-            if (!ChannelCatalog.isValidClassification(storedCategory, subcategory)) {
-                throw InvalidChannelDocumentException(
-                    "channels[$index].subcategory does not belong to $storedCategory",
-                )
-            }
+            // Categories and subcategories are free-form, validated only as clean non-empty
+            // text. A new category in a newer data_version must not make a document unusable.
             Classification(
                 category = storedCategory,
-                subcategory = subcategory,
+                subcategory = requiredString(json, "subcategory", 96),
                 language = requiredString(json, "language", 64),
                 region = requiredString(json, "region", 64),
             )
@@ -208,17 +205,7 @@ object JsonUtils {
         }
         validateText(channel.name, "channels[$index].name", 160)
         validateText(channel.category, "channels[$index].category", 64)
-        if (channel.category !in VALID_CATEGORIES) {
-            throw InvalidChannelDocumentException(
-                "channels[$index].category is not a supported category: ${channel.category}",
-            )
-        }
         validateText(channel.subcategory, "channels[$index].subcategory", 96)
-        if (!ChannelCatalog.isValidClassification(channel.category, channel.subcategory)) {
-            throw InvalidChannelDocumentException(
-                "channels[$index].subcategory does not belong to ${channel.category}",
-            )
-        }
         validateText(channel.language, "channels[$index].language", 64)
         validateText(channel.region, "channels[$index].region", 64)
         validateText(channel.logo, "channels[$index].logo", 2048)

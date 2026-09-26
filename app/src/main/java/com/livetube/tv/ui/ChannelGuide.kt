@@ -83,6 +83,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.livetube.tv.data.CategoryDefinition
 import com.livetube.tv.data.Channel
 import com.livetube.tv.data.ChannelCatalog
+import com.livetube.tv.data.GuideCategory
 import kotlinx.coroutines.launch
 
 private val GuideRed = Color(0xFFFF1F3D)
@@ -120,33 +121,30 @@ fun ChannelGuide(
     onInteraction: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // The guide never changes playback while it opens: it only works out where to place focus.
+    val guideCategories = remember(channels) { ChannelCatalog.guideCategories(channels) }
     val playingChannel = channels.firstOrNull { it.id == selectedChannelId }
-    val fallbackCategoryId = if (playingChannel != null && playingChannel.id in favoriteChannelIds) {
-        ChannelCatalog.FAVORITES_CATEGORY_ID
-    } else {
-        playingChannel?.category?.let(ChannelCatalog::categoryByName)?.id
-            ?: ChannelCatalog.categories.first { it.sourceBacked }.id
-    }
-    val initialCategoryIndex = remember(fallbackCategoryId) {
-        ChannelCatalog.categories.indexOfFirst { it.id == preferredCategoryId }
-            .takeIf { it >= 0 }
-            ?: ChannelCatalog.categories.indexOfFirst { it.id == fallbackCategoryId }
-                .coerceAtLeast(0)
+    val initialCategoryIndex = remember(channels, selectedChannelId, preferredCategoryId) {
+        GuideFocus.initialTarget(
+            channels = channels,
+            playingChannelId = selectedChannelId,
+            preferredCategoryId = preferredCategoryId,
+            guideCategories = guideCategories,
+        ).categoryIndex
     }
 
     var focusedCategoryIndex by remember { mutableIntStateOf(initialCategoryIndex) }
-    var focusedChannelIndex by remember { mutableIntStateOf(0) }
-    var focusedRow by remember { mutableStateOf(GuideRow.CATEGORIES) }
     var showSubcategoryDialog by remember { mutableStateOf(false) }
     var pendingCategoryFocus by remember { mutableStateOf<Int?>(null) }
     var pendingChannelFocus by remember { mutableStateOf<Int?>(null) }
 
-    val selectedCategoryId = ChannelCatalog.categories[focusedCategoryIndex].id
-    val availableSubcategories = remember(selectedCategoryId) {
+    val selectedCategoryId = guideCategories[focusedCategoryIndex].id
+    val availableSubcategories = remember(selectedCategoryId, channels) {
         buildList {
             add(CategoryFilter(ChannelCatalog.ALL_SUBCATEGORY_ID, "All subcategories"))
             if (selectedCategoryId != ChannelCatalog.FAVORITES_CATEGORY_ID) {
-                ChannelCatalog.subcategoriesFor(selectedCategoryId).forEach { add(CategoryFilter(it.id, it.name)) }
+                ChannelCatalog.subcategoriesForChannels(channels, selectedCategoryId)
+                    .forEach { add(CategoryFilter(it.id, it.name)) }
             }
         }
     }
@@ -163,8 +161,18 @@ fun ChannelGuide(
         )
     }
 
-    val categoryFocusRequesters = remember {
-        ChannelCatalog.categories.associate { it.id to FocusRequester() }
+    // The playing channel is focused in the row that is actually on screen. A subcategory filter
+    // that hides it leaves focus on the first visible channel.
+    val initialChannelIndex = GuideFocus.indexOfChannel(visibleChannels, selectedChannelId)
+    val initialFocusesChannel = playingChannel != null &&
+        visibleChannels.any { it.id == playingChannel.id }
+    var focusedChannelIndex by remember { mutableIntStateOf(initialChannelIndex) }
+    var focusedRow by remember {
+        mutableStateOf(if (initialFocusesChannel) GuideRow.CHANNELS else GuideRow.CATEGORIES)
+    }
+
+    val categoryFocusRequesters = remember(guideCategories) {
+        guideCategories.associate { it.id to FocusRequester() }
     }
     val channelFocusRequesters = remember(visibleChannels) {
         visibleChannels.associate { it.id to FocusRequester() }
@@ -178,18 +186,18 @@ fun ChannelGuide(
     val channelsCanScrollRight by remember { derivedStateOf { channelListState.canScrollForward } }
 
     fun selectCategory(index: Int) {
-        val clamped = index.coerceIn(0, ChannelCatalog.categories.lastIndex)
+        val clamped = index.coerceIn(0, guideCategories.lastIndex)
         if (clamped != focusedCategoryIndex) {
             focusedCategoryIndex = clamped
             focusedChannelIndex = 0
             guideScope.launch { channelListState.scrollToItem(0) }
-            onCategoryChange(ChannelCatalog.categories[clamped].id)
+            onCategoryChange(guideCategories[clamped].id)
         }
         onInteraction()
     }
 
     fun requestCategoryFocus(index: Int) {
-        focusedCategoryIndex = index.coerceIn(0, ChannelCatalog.categories.lastIndex)
+        focusedCategoryIndex = index.coerceIn(0, guideCategories.lastIndex)
         focusedRow = GuideRow.CATEGORIES
         pendingCategoryFocus = focusedCategoryIndex
     }
@@ -204,7 +212,7 @@ fun ChannelGuide(
     // LazyRow disposes off-screen items, so requesting focus without this dead-ends D-pad.
     LaunchedEffect(pendingCategoryFocus) {
         val index = pendingCategoryFocus ?: return@LaunchedEffect
-        val category = ChannelCatalog.categories.getOrNull(index) ?: return@LaunchedEffect
+        val category = guideCategories.getOrNull(index) ?: return@LaunchedEffect
         categoryListState.scrollToItem(index)
         val requester = categoryFocusRequesters.getValue(category.id)
         var attached = false
@@ -230,7 +238,14 @@ fun ChannelGuide(
         pendingChannelFocus = null
     }
 
-    LaunchedEffect(Unit) { requestCategoryFocus(initialCategoryIndex) }
+    // On open the playing channel is focused; nothing is selected and playback is untouched.
+    LaunchedEffect(Unit) {
+        if (initialFocusesChannel) {
+            requestChannelFocus(initialChannelIndex)
+        } else {
+            requestCategoryFocus(initialCategoryIndex)
+        }
+    }
 
     LaunchedEffect(showSubcategoryDialog) { onModalChanged(showSubcategoryDialog) }
     DisposableEffect(Unit) {
@@ -283,7 +298,7 @@ fun ChannelGuide(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 itemsIndexed(
-                    items = ChannelCatalog.categories,
+                    items = guideCategories,
                     key = { _, category -> category.id },
                 ) { index, category ->
                     CategoryChip(
@@ -448,7 +463,7 @@ private const val MAX_FOCUS_ATTEMPTS = 5
 
 @Composable
 private fun CategoryChip(
-    category: CategoryDefinition,
+    category: GuideCategory,
     selected: Boolean,
     focusRequester: FocusRequester,
     onFocused: () -> Unit,

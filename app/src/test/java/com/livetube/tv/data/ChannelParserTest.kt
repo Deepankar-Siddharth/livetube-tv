@@ -55,10 +55,34 @@ class ChannelParserTest {
         assertTrue(runCatching { JsonUtils.parseDocument(invalidTimestamp) }.isFailure)
     }
 
+    /**
+     * A newer catalogue may introduce categories and subcategories. Rejecting them would make a
+     * valid document unusable and silently hide channels, so only the text itself is checked.
+     */
     @Test
-    fun rejectsInvalidCategoryCombination() {
-        val invalid = validDocument().replace("\"Hindi News\"", "\"Cricket\"")
-        assertTrue(runCatching { JsonUtils.parseDocument(invalid) }.isFailure)
+    fun acceptsNewCategoriesAndSubcategories() {
+        val newSubcategory = validDocument().replace("\"Hindi News\"", "\"Regional Indian News\"")
+        val newCategory = newSubcategory.replace("\"category\": \"News\"", "\"category\": \"Nature & Science\"")
+        val renamedCategory = newSubcategory.replace(
+            "\"category\": \"News\"",
+            "\"category\": \"Wildlife & Nature Cams\"",
+        )
+
+        val parsed = JsonUtils.parseDocument(newCategory)
+        val renamed = JsonUtils.parseDocument(renamedCategory)
+
+        assertEquals("Nature & Science", parsed.channels.single().category)
+        assertEquals("Regional Indian News", parsed.channels.single().subcategory)
+        assertEquals("Wildlife & Nature Cams", renamed.channels.single().category)
+    }
+
+    @Test
+    fun rejectsBlankOrOversizedCategoryText() {
+        val blank = validDocument().replace("\"category\": \"News\"", "\"category\": \"   \"")
+        val oversized = validDocument().replace("\"category\": \"News\"", "\"category\": \"${"x".repeat(65)}\"")
+
+        assertTrue(runCatching { JsonUtils.parseDocument(blank) }.isFailure)
+        assertTrue(runCatching { JsonUtils.parseDocument(oversized) }.isFailure)
     }
 
     @Test

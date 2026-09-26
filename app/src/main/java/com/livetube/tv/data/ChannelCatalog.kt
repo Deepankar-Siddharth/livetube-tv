@@ -17,10 +17,25 @@ data class SubcategoryDefinition(
     val sortOrder: Int,
 )
 
+/**
+ * One entry of the guide's category row.
+ *
+ * [known] is false for a category that only exists in the active document. Such categories are
+ * appended after the built-in ones so a newer catalogue can add categories without hiding any
+ * channel from the guide.
+ */
+data class GuideCategory(
+    val id: String,
+    val name: String,
+    val known: Boolean,
+)
+
 /** Single source of truth for the deliberately small Android TV category hierarchy. */
 object ChannelCatalog {
     const val ALL_SUBCATEGORY_ID: String = "all"
     const val FAVORITES_CATEGORY_ID: String = "favorites"
+    private const val CUSTOM_CATEGORY_PREFIX = "custom:"
+    private const val CUSTOM_SUBCATEGORY_PREFIX = "custom:"
 
     val categories: List<CategoryDefinition> = listOf(
         CategoryDefinition(FAVORITES_CATEGORY_ID, "Favorites", 0, sourceBacked = false),
@@ -84,7 +99,6 @@ object ChannelCatalog {
 
     private val categoriesById = categories.associateBy(CategoryDefinition::id)
     private val categoriesByName = categories.associateBy(CategoryDefinition::name)
-    private val subcategoriesById = subcategories.associateBy(SubcategoryDefinition::id)
     private val subcategoriesByCategory = subcategories.groupBy(SubcategoryDefinition::categoryId)
 
     val sourceCategoryNames: Set<String> = categories
@@ -104,8 +118,97 @@ object ChannelCatalog {
     fun subcategoriesFor(categoryId: String): List<SubcategoryDefinition> =
         subcategoriesByCategory[categoryId].orEmpty().sortedBy(SubcategoryDefinition::sortOrder)
 
-    fun isValidClassification(category: String, subcategory: String): Boolean =
-        subcategoryNamesByCategory[category]?.contains(subcategory) == true
+    /**
+     * Category row for the guide: the built-in categories first, then any category that only
+     * exists in the active document (sorted by name) so new catalogue categories stay reachable.
+     */
+    /**
+     * Display names of categories that only exist in the active document, keyed by their
+     * generated id. [guideCategories] is the entry point that fills this map, and the guide always
+     * builds its rows before it filters, so an id can always be resolved back to its name.
+     */
+    private val customCategoryNames: MutableMap<String, String> = linkedMapOf()
+
+    fun guideCategories(channels: List<Channel>): List<GuideCategory> {
+        val known = categories.map { GuideCategory(it.id, it.name, known = true) }
+        val knownNames = categories.mapTo(linkedSetOf(), CategoryDefinition::name)
+        val extra = channels.asSequence()
+            .map(Channel::category)
+            .filterNot { it in knownNames }
+            .distinct()
+            .sortedWith(String.CASE_INSENSITIVE_ORDER)
+            .map { name ->
+                val id = idForCustomName(name)
+                customCategoryNames[id] = name
+                GuideCategory(id, name, known = false)
+            }
+            .toList()
+        return known + extra
+    }
+
+    /** Stable id for a category name, including names that are not built in. */
+    fun idForCustomName(name: String): String {
+        categoryByName(name)?.let { return it.id }
+        val slug = name.lowercase(Locale.ROOT)
+            .replace(NON_SLUG_CHARACTERS, "-")
+            .trim('-')
+            .take(48)
+            .ifEmpty { "category" }
+        return "$CUSTOM_CATEGORY_PREFIX$slug"
+    }
+
+    /**
+     * Resolves a guide category id back to the catalogue category name, if it has one.
+     *
+     * Built-in ids resolve from the definitions. Ids generated for document-only categories resolve
+     * from [customCategoryNames], which [guideCategories] fills; the guide always builds its rows
+     * before filtering, so resolution never depends on a display name being a valid id.
+     */
+    fun nameForGuideCategoryId(id: String): String? {
+        if (id.startsWith(CUSTOM_CATEGORY_PREFIX)) return customCategoryNames[id]
+        return category(id)?.name
+    }
+
+    /**
+     * Subcategories available for a guide category: the built-in definitions first, then any
+     * subcategory that the active document introduces for that category.
+     */
+    fun subcategoriesForChannels(
+        channels: List<Channel>,
+        categoryId: String,
+    ): List<SubcategoryDefinition> {
+        val name = nameForGuideCategoryId(categoryId) ?: return emptyList()
+        val defined = subcategoriesFor(categoryId).map(SubcategoryDefinition::name).toList()
+        val extra = channels.asSequence()
+            .filter { it.category == name }
+            .map(Channel::subcategory)
+            .filterNot { it in defined }
+            .distinct()
+            .sortedWith(String.CASE_INSENSITIVE_ORDER)
+            .toList()
+        val known = defined.mapIndexed { index, subcategoryName ->
+            SubcategoryDefinition(categoryId, subcategoryId(categoryId, subcategoryName), subcategoryName, index + 1)
+        }
+        val discovered = extra.mapIndexed { index, subcategoryName ->
+            SubcategoryDefinition(
+                categoryId = categoryId,
+                id = subcategoryId(categoryId, subcategoryName),
+                name = subcategoryName,
+                sortOrder = known.size + index + 1,
+            )
+        }
+        return known + discovered
+    }
+
+    private fun subcategoryId(categoryId: String, name: String): String {
+        subcategoriesFor(categoryId).firstOrNull { it.name == name }?.let { return it.id }
+        val slug = name.lowercase(Locale.ROOT)
+            .replace(NON_SLUG_CHARACTERS, "-")
+            .trim('-')
+            .take(48)
+            .ifEmpty { "subcategory" }
+        return "$CUSTOM_SUBCATEGORY_PREFIX$slug"
+    }
 
     fun enabledChannels(channels: List<Channel>): List<Channel> = channels
         .asSequence()
@@ -119,20 +222,26 @@ object ChannelCatalog {
         subcategoryId: String? = null,
         favoriteChannelIds: Set<String> = emptySet(),
     ): List<Channel> {
-        val category = category(categoryId) ?: return emptyList()
+        val categoryName = nameForGuideCategoryId(categoryId) ?: return emptyList()
+        val subcategoryName = when {
+            subcategoryId == null || subcategoryId == ALL_SUBCATEGORY_ID -> null
+            else -> subcategoriesForChannels(channels, categoryId)
+                .firstOrNull { it.id == subcategoryId }
+                ?.name
+        }
+        // An unknown subcategory id must not hide the whole category.
+        if (subcategoryName == null && subcategoryId != null && subcategoryId != ALL_SUBCATEGORY_ID) {
+            return emptyList()
+        }
         return channels.asSequence()
             .filter(Channel::enabled)
             .filter { channel ->
                 when {
-                    category.id == FAVORITES_CATEGORY_ID -> channel.id in favoriteChannelIds
-                    else -> channel.category == category.name
+                    categoryId == FAVORITES_CATEGORY_ID -> channel.id in favoriteChannelIds
+                    else -> channel.category == categoryName
                 }
             }
-            .filter { channel ->
-                subcategoryId == null ||
-                    subcategoryId == ALL_SUBCATEGORY_ID ||
-                    channel.subcategory == subcategoriesById[subcategoryId]?.name
-            }
+            .filter { channel -> subcategoryName == null || channel.subcategory == subcategoryName }
             .sortedWith(CHANNEL_ORDER)
             .toList()
     }
@@ -160,6 +269,8 @@ object ChannelCatalog {
 
     private val CHANNEL_ORDER: Comparator<Channel> =
         compareBy(Channel::sortOrder).thenBy(String.CASE_INSENSITIVE_ORDER, Channel::name)
+
+    private val NON_SLUG_CHARACTERS = Regex("[^a-z0-9]+")
 
     private fun subcategory(
         categoryId: String,

@@ -243,22 +243,33 @@ fun SettingsScreen(
                                 },
                             )
                         }
-                        syncFeedback?.let { feedback ->
-                            FeedbackCard(
-                                text = when (feedback) {
-                                    is ChannelSyncFeedback.Updated ->
-                                        "Channels updated successfully (${feedback.channelCount} channels)"
-                                    is ChannelSyncFeedback.UpToDate ->
-                                        "Channels are already up to date (${feedback.channelCount} channels)"
-                                    is ChannelSyncFeedback.Failed -> feedback.message
-                                },
-                                tone = when (feedback) {
-                                    is ChannelSyncFeedback.Updated,
-                                    is ChannelSyncFeedback.UpToDate,
-                                    -> TvPalette.Success
-                                    is ChannelSyncFeedback.Failed -> TvPalette.Warning
-                                },
-                            )
+                        // The sync result belongs to the page that started the sync.
+                        if (page == SettingsPage.CHANNEL_DATA) {
+                            syncFeedback?.let { feedback ->
+                                FeedbackCard(
+                                    text = when (feedback) {
+                                        is ChannelSyncFeedback.Updated ->
+                                            "Channels updated to version ${feedback.dataVersion} " +
+                                                "(${feedback.channelCount} channels)"
+                                        is ChannelSyncFeedback.UpToDate ->
+                                            "Channels are already up to date " +
+                                                "(version ${feedback.dataVersion}, " +
+                                                "${feedback.channelCount} channels)"
+                                        is ChannelSyncFeedback.KeptLocal ->
+                                            "Version ${feedback.dataVersion} is newer than the " +
+                                                "downloaded version ${feedback.remoteDataVersion}; " +
+                                                "keeping the current channels"
+                                        is ChannelSyncFeedback.Failed -> feedback.message
+                                    },
+                                    tone = when (feedback) {
+                                        is ChannelSyncFeedback.Updated,
+                                        is ChannelSyncFeedback.UpToDate,
+                                        is ChannelSyncFeedback.KeptLocal,
+                                        -> TvPalette.Success
+                                        is ChannelSyncFeedback.Failed -> TvPalette.Warning
+                                    },
+                                )
+                            }
                         }
                     }
 
@@ -454,6 +465,7 @@ private fun SettingsChannelDataRows(
                 },
             )
             AboutInfoRow("Channels", status.channelCount.toString())
+            AboutInfoRow("Data Version", status.dataVersion.toString())
             AboutInfoRow(
                 label = "Status",
                 value = when (status.state) {
@@ -635,7 +647,8 @@ sealed interface UpdateCheckFeedback {
 
 /** Short result of a manual channel sync, shown inside the settings screen. */
 sealed interface ChannelSyncFeedback {
-    data class Updated(val channelCount: Int) : ChannelSyncFeedback
-    data class UpToDate(val channelCount: Int) : ChannelSyncFeedback
+    data class Updated(val channelCount: Int, val dataVersion: Int) : ChannelSyncFeedback
+    data class UpToDate(val channelCount: Int, val dataVersion: Int) : ChannelSyncFeedback
+    data class KeptLocal(val dataVersion: Int, val remoteDataVersion: Int) : ChannelSyncFeedback
     data class Failed(val message: String) : ChannelSyncFeedback
 }
