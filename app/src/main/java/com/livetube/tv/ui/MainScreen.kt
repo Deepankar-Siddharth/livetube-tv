@@ -37,9 +37,11 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.livetube.tv.R
+import com.livetube.tv.data.AppSettings
 import com.livetube.tv.data.Channel
 import com.livetube.tv.data.ChannelCatalog
 import com.livetube.tv.data.ChannelDocument
+import com.livetube.tv.data.ChannelSyncStatus
 import com.livetube.tv.player.PlaybackController
 import com.livetube.tv.player.PlaybackPhase
 import com.livetube.tv.player.PlaybackState
@@ -61,20 +63,37 @@ fun MainScreen(
     usingCachedData: Boolean,
     favoriteChannelIds: Set<String>,
     updateResult: UpdateCheckResult,
+    settings: AppSettings,
+    updateFlowState: UpdateFlowState,
+    updateCheckInProgress: Boolean,
+    updateCheckFeedback: UpdateCheckFeedback?,
+    updateInstallInProgress: Boolean,
+    syncStatus: ChannelSyncStatus,
+    syncInProgress: Boolean,
+    syncFeedback: ChannelSyncFeedback?,
     onSelectChannel: (Channel) -> Unit,
     onSetFavorite: (Channel, Boolean) -> Unit,
     onRetryPlayback: () -> Unit,
-    onInstallUpdate: (GitHubRelease) -> Unit,
-    onDismissUpdate: () -> Unit,
+    onDownloadUpdate: (GitHubRelease) -> Unit,
+    onInstallDownloadedUpdate: () -> Unit,
+    onPostponeUpdate: () -> Unit,
+    onDismissUpdateMessage: () -> Unit,
+    onSetAutoCheckUpdates: (Boolean) -> Unit,
+    onCheckForUpdate: () -> Unit,
+    onSyncChannels: () -> Unit,
+    onConsumeUpdateFeedback: () -> Unit,
+    onConsumeSyncFeedback: () -> Unit,
     remoteKeyEvents: SharedFlow<Int>,
     onRemoteNavigationModeChanged: (Boolean) -> Unit,
     onExit: () -> Unit,
 ) {
     val enabledChannels = document.enabledChannels()
+    val context = LocalContext.current
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
     var guideVisible by remember { mutableStateOf(false) }
     var showExitDialog by remember { mutableStateOf(false) }
-    var showAboutDialog by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
+    var settingsPage by remember { mutableStateOf(SettingsPage.ROOT) }
     var actionChannel by remember { mutableStateOf<Channel?>(null) }
     var overlayHasFocus by remember { mutableStateOf(false) }
     var interaction by remember { mutableIntStateOf(0) }
@@ -82,6 +101,13 @@ fun MainScreen(
     var rememberedCategoryId by rememberSaveable { mutableStateOf<String?>(null) }
     var subcategoryFilterId by rememberSaveable {
         mutableStateOf(ChannelCatalog.ALL_SUBCATEGORY_ID)
+    }
+
+    fun openSettings(page: SettingsPage = SettingsPage.ROOT) {
+        settingsPage = page
+        showSettings = true
+        guideVisible = false
+        onRemoteNavigationModeChanged(false)
     }
 
     LaunchedEffect(playback.channel) {
@@ -174,28 +200,27 @@ fun MainScreen(
     }
 
     LaunchedEffect(
-        updateResult,
+        updateFlowState,
         showExitDialog,
-        showAboutDialog,
+        showSettings,
         actionChannel,
         overlayHasFocus,
         guideModalVisible,
     ) {
-        val modalVisible = updateResult is UpdateCheckResult.Available ||
+        val modalVisible = updateFlowState !is UpdateFlowState.Idle ||
             showExitDialog ||
-            showAboutDialog ||
+            showSettings ||
             actionChannel != null ||
             guideModalVisible
         onRemoteNavigationModeChanged(!guideVisible && !modalVisible && !overlayHasFocus)
     }
 
-    val updateAvailable = updateResult as? UpdateCheckResult.Available
     BackHandler {
         when {
             actionChannel != null -> actionChannel = null
             showExitDialog -> showExitDialog = false
-            showAboutDialog -> showAboutDialog = false
-            updateAvailable != null -> onDismissUpdate()
+            showSettings -> showSettings = false
+            updateFlowState !is UpdateFlowState.Idle -> onPostponeUpdate()
             guideVisible -> setGuideVisible(false)
             else -> showExitDialog = true
         }
@@ -251,7 +276,7 @@ fun MainScreen(
             usingCachedData = usingCachedData,
             requestFocus = !guideVisible,
             onRetry = onRetryPlayback,
-            onAbout = { showAboutDialog = true },
+            onAbout = { openSettings(SettingsPage.ABOUT) },
             onOverlayFocusChanged = { overlayHasFocus = it },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -293,9 +318,8 @@ fun MainScreen(
                     actionChannel = channel
                     interaction += 1
                 },
-                onShowAbout = {
-                    showAboutDialog = true
-                    setGuideVisible(false)
+                onShowSettings = {
+                    openSettings()
                     interaction += 1
                 },
                 onInteraction = { interaction += 1 },
@@ -319,25 +343,53 @@ fun MainScreen(
             onDismiss = { actionChannel = null },
         )
     }
-    if (updateAvailable != null) {
-        UpdateDialog(
-            release = updateAvailable.release,
-            onInstall = { onInstallUpdate(updateAvailable.release) },
-            onLater = onDismissUpdate,
-        )
-    }
-    if (showAboutDialog) {
-        val context = LocalContext.current
-        AboutScreen(
+    if (showSettings) {
+        SettingsScreen(
+            startPage = settingsPage,
+            settings = settings,
             updateResult = updateResult,
+            updateCheckInProgress = updateCheckInProgress,
+            updateCheckFeedback = updateCheckFeedback,
+            updateInstallInProgress = updateInstallInProgress,
+            syncStatus = syncStatus,
+            syncInProgress = syncInProgress,
+            syncFeedback = syncFeedback,
+            onStartPageConsumed = { settingsPage = SettingsPage.ROOT },
+            onSetAutoCheckUpdates = onSetAutoCheckUpdates,
+            onCheckForUpdate = onCheckForUpdate,
+            onDownloadUpdate = onDownloadUpdate,
+            onSyncChannels = onSyncChannels,
+            onFeedbackConsumed = {
+                onConsumeUpdateFeedback()
+                onConsumeSyncFeedback()
+            },
             onOpenUrl = { url ->
                 if (!ExternalLinks.open(context, url)) {
                     Toast.makeText(context, "No app can open this link", Toast.LENGTH_SHORT).show()
                 }
             },
-            onInstallUpdate = onInstallUpdate,
-            onDismiss = { showAboutDialog = false },
+            onDismiss = { showSettings = false },
         )
+    }
+    when (val flow = updateFlowState) {
+        is UpdateFlowState.Downloading -> UpdateDownloadDialog(
+            state = flow,
+            onDismiss = onPostponeUpdate,
+        )
+
+        is UpdateFlowState.Ready -> UpdateReadyDialog(
+            state = flow,
+            onInstall = onInstallDownloadedUpdate,
+            onLater = onPostponeUpdate,
+        )
+
+        is UpdateFlowState.Failed -> UpdateMessageDialog(
+            title = "Update Problem",
+            message = flow.message,
+            onClose = onDismissUpdateMessage,
+        )
+
+        UpdateFlowState.Idle -> Unit
     }
     if (showExitDialog) {
         ExitDialog(

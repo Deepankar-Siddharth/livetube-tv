@@ -39,6 +39,19 @@ data class ChannelDocument(
 ) {
     fun enabledChannels(): List<Channel> = ChannelCatalog.enabledChannels(channels)
 
+    /** True when this remote document should replace [other] on the device. */
+    fun isNewerThan(other: ChannelDocument): Boolean = when {
+        schemaVersion != other.schemaVersion -> schemaVersion > other.schemaVersion
+        dataVersion != other.dataVersion -> dataVersion > other.dataVersion
+        else -> updatedAt != other.updatedAt && updatedAt > other.updatedAt
+    }
+
+    /** True when both documents describe the same catalogue revision. */
+    fun sameRevisionAs(other: ChannelDocument): Boolean =
+        schemaVersion == other.schemaVersion &&
+            dataVersion == other.dataVersion &&
+            updatedAt == other.updatedAt
+
     fun toJson(): JSONObject = JSONObject().apply {
         put("schema_version", schemaVersion)
         put("data_version", dataVersion)

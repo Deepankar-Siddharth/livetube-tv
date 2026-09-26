@@ -10,20 +10,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Close
@@ -36,12 +30,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,24 +49,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.livetube.tv.BuildConfig
 import com.livetube.tv.R
 import com.livetube.tv.update.GitHubRelease
 import com.livetube.tv.update.UpdateCheckResult
-import com.livetube.tv.util.Constants
 
-private val AboutRed = Color(0xFFFF1F3D)
-private val AboutSurface = Color(0xF20A121C)
-private val AboutCard = Color(0xFF16212E)
-private val AboutCardFocused = Color(0xFF22303F)
-private val AboutBorder = Color(0x1FFFFFFF)
-private val AboutTextPrimary = Color(0xFFF2F6FA)
-private val AboutTextMuted = Color(0xFFA9BACB)
-private const val ABOUT_FOCUS_ATTEMPTS = 6
-
-private enum class AboutPage {
+/** Pages of the About experience, hosted by the Settings screen. */
+internal enum class AboutPage {
     HOME,
     DEVELOPER,
     APP_INFORMATION,
@@ -82,96 +63,13 @@ private enum class AboutPage {
 }
 
 /**
- * User-facing About experience for LiveTube TV.
+ * About content only: the pages themselves, without a dialog or a navigation stack.
  *
- * Only information a viewer needs is shown: how to get updates, who builds the app, that it is
- * open source, and the app version. Build, dependency, extraction and cache internals are
+ * Only information a viewer needs is shown. Build, dependency, extraction and cache internals are
  * deliberately not part of this screen.
  */
 @Composable
-fun AboutScreen(
-    updateResult: UpdateCheckResult,
-    onOpenUrl: (String) -> Unit,
-    onInstallUpdate: (GitHubRelease) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var page by remember { mutableStateOf(AboutPage.HOME) }
-    val pageFocusRequester = rememberPageFocusRequester(page)
-    val availableRelease = (updateResult as? UpdateCheckResult.Available)?.release
-
-    Dialog(
-        onDismissRequest = {
-            if (page == AboutPage.HOME) onDismiss() else page = AboutPage.HOME
-        },
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false,
-        ),
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Surface(
-                modifier = Modifier
-                    .widthIn(max = 760.dp)
-                    .fillMaxWidth(0.9f)
-                    .fillMaxHeight(0.9f),
-                shape = RoundedCornerShape(26.dp),
-                color = AboutSurface,
-                border = BorderStroke(1.dp, AboutBorder),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 28.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    AboutPageHeader(page = page)
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        when (page) {
-                            AboutPage.HOME -> AboutHomeRows(
-                                availableRelease = availableRelease,
-                                focusRequester = pageFocusRequester,
-                                onOpenLatest = { page = AboutPage.LATEST_VERSION },
-                                onOpenDeveloper = { page = AboutPage.DEVELOPER },
-                                onOpenSource = { onOpenUrl(Constants.projectUrl()) },
-                                onOpenInformation = { page = AboutPage.APP_INFORMATION },
-                            )
-
-                            AboutPage.DEVELOPER -> AboutDeveloperRows(
-                                focusRequester = pageFocusRequester,
-                                onOpenProfile = { onOpenUrl(Constants.ownerProfileUrl()) },
-                                onOpenRepository = { onOpenUrl(Constants.projectUrl()) },
-                            )
-
-                            AboutPage.APP_INFORMATION -> AboutInformationRows()
-
-                            AboutPage.LATEST_VERSION -> AboutLatestVersionRows(
-                                availableRelease = availableRelease,
-                                focusRequester = pageFocusRequester,
-                                onOpenReleases = { onOpenUrl(Constants.projectReleasesUrl()) },
-                                onInstallUpdate = onInstallUpdate,
-                            )
-                        }
-                    }
-
-                    AboutCloseButton(onClick = onDismiss)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AboutPageHeader(page: AboutPage) {
+internal fun AboutPageHeader(page: AboutPage) {
     when (page) {
         AboutPage.HOME -> AboutBrandHeader()
         AboutPage.DEVELOPER -> AboutSubPageHeader(
@@ -194,9 +92,50 @@ private fun AboutPageHeader(page: AboutPage) {
 }
 
 @Composable
+internal fun AboutPageBody(
+    page: AboutPage,
+    availableRelease: GitHubRelease?,
+    focusRequester: FocusRequester?,
+    onOpenLatest: () -> Unit,
+    onOpenDeveloper: () -> Unit,
+    onOpenSource: () -> Unit,
+    onOpenInformation: () -> Unit,
+    onOpenProfile: () -> Unit,
+    onOpenRepository: () -> Unit,
+    onOpenReleases: () -> Unit,
+    onInstallUpdate: (GitHubRelease) -> Unit,
+) {
+    when (page) {
+        AboutPage.HOME -> AboutHomeRows(
+            availableRelease = availableRelease,
+            focusRequester = focusRequester,
+            onOpenLatest = onOpenLatest,
+            onOpenDeveloper = onOpenDeveloper,
+            onOpenSource = onOpenSource,
+            onOpenInformation = onOpenInformation,
+        )
+
+        AboutPage.DEVELOPER -> AboutDeveloperRows(
+            focusRequester = focusRequester,
+            onOpenProfile = onOpenProfile,
+            onOpenRepository = onOpenRepository,
+        )
+
+        AboutPage.APP_INFORMATION -> AboutInformationRows()
+
+        AboutPage.LATEST_VERSION -> AboutLatestVersionRows(
+            availableRelease = availableRelease,
+            focusRequester = focusRequester,
+            onOpenReleases = onOpenReleases,
+            onInstallUpdate = onInstallUpdate,
+        )
+    }
+}
+
+@Composable
 private fun AboutHomeRows(
     availableRelease: GitHubRelease?,
-    focusRequester: FocusRequester,
+    focusRequester: FocusRequester?,
     onOpenLatest: () -> Unit,
     onOpenDeveloper: () -> Unit,
     onOpenSource: () -> Unit,
@@ -236,7 +175,7 @@ private fun AboutHomeRows(
 
 @Composable
 private fun AboutDeveloperRows(
-    focusRequester: FocusRequester,
+    focusRequester: FocusRequester?,
     onOpenProfile: () -> Unit,
     onOpenRepository: () -> Unit,
 ) {
@@ -260,14 +199,14 @@ private fun AboutInformationRows() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = AboutCard,
-        border = BorderStroke(1.dp, AboutBorder),
+        color = TvPalette.Card,
+        border = BorderStroke(1.dp, TvPalette.Border),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            AboutInfoRow("App Version", displayVersion())
+            AboutInfoRow("App Version", AppVersionText.display())
             if (BuildConfig.DEBUG) {
                 AboutInfoRow("Build", "Development build")
             }
@@ -282,15 +221,15 @@ private fun AboutInformationRows() {
 @Composable
 private fun AboutLatestVersionRows(
     availableRelease: GitHubRelease?,
-    focusRequester: FocusRequester,
+    focusRequester: FocusRequester?,
     onOpenReleases: () -> Unit,
     onInstallUpdate: (GitHubRelease) -> Unit,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = if (availableRelease != null) Color(0xFF2A131C) else AboutCard,
-        border = BorderStroke(1.dp, if (availableRelease != null) AboutRed else AboutBorder),
+        color = if (availableRelease != null) Color(0xFF2A131C) else TvPalette.Card,
+        border = BorderStroke(1.dp, if (availableRelease != null) TvPalette.Red else TvPalette.Border),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
@@ -301,22 +240,22 @@ private fun AboutLatestVersionRows(
                     text = if (availableRelease != null) "New version available" else "You are up to date",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = AboutTextPrimary,
+                    color = TvPalette.TextPrimary,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = if (availableRelease != null) {
                         "Version ${availableRelease.displayVersion} is ready to install"
                     } else {
-                        "Current version ${displayVersion()}"
+                        "Current version ${AppVersionText.display()}"
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = AboutTextMuted,
+                    color = TvPalette.TextMuted,
                 )
             }
             if (availableRelease != null) {
                 Spacer(Modifier.width(16.dp))
-                AboutPillButton(
+                TvPillButton(
                     text = "UPDATE",
                     onClick = { onInstallUpdate(availableRelease) },
                 )
@@ -339,7 +278,7 @@ private fun AboutBrandHeader() {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // The lockup is drawn for dark surfaces (transparent background, white wordmark),
-        // so it is placed directly on the About background instead of on a light card.
+        // so it is placed directly on the panel instead of on a light card.
         Image(
             painter = painterResource(R.drawable.livetube_logo),
             contentDescription = stringResource(R.string.app_name),
@@ -351,16 +290,17 @@ private fun AboutBrandHeader() {
             text = "Watch Live TV on Android TV",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            color = AboutTextPrimary,
+            color = TvPalette.TextPrimary,
         )
     }
 }
 
 @Composable
-private fun AboutSubPageHeader(
+internal fun AboutSubPageHeader(
     title: String,
     subtitle: String,
     description: String? = null,
+    logoSize: androidx.compose.ui.unit.Dp = 54.dp,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -370,7 +310,7 @@ private fun AboutSubPageHeader(
             painter = painterResource(R.drawable.livetube_logo),
             contentDescription = null,
             contentScale = ContentScale.Fit,
-            modifier = Modifier.size(54.dp),
+            modifier = Modifier.size(logoSize),
         )
         Spacer(Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
@@ -378,19 +318,19 @@ private fun AboutSubPageHeader(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = AboutTextPrimary,
+                color = TvPalette.TextPrimary,
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = AboutTextMuted,
+                color = TvPalette.TextMuted,
             )
             if (description != null) {
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = AboutTextMuted,
+                    color = TvPalette.TextMuted,
                 )
             }
         }
@@ -398,7 +338,7 @@ private fun AboutSubPageHeader(
 }
 
 @Composable
-private fun AboutActionRow(
+internal fun AboutActionRow(
     icon: ImageVector,
     title: String,
     subtitle: String,
@@ -406,6 +346,7 @@ private fun AboutActionRow(
     modifier: Modifier = Modifier,
     badge: String? = null,
     focusRequester: FocusRequester? = null,
+    trailing: @Composable (() -> Unit)? = null,
 ) {
     var focused by remember(title) { mutableStateOf(false) }
     val scale by animateFloatAsState(
@@ -421,10 +362,10 @@ private fun AboutActionRow(
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .onFocusChanged { focused = it.isFocused }
             .clip(shape)
-            .background(if (focused) AboutCardFocused else AboutCard)
+            .background(if (focused) TvPalette.CardFocused else TvPalette.Card)
             .border(
                 width = if (focused) 2.dp else 1.dp,
-                color = if (focused) Color.White else AboutBorder,
+                color = if (focused) Color.White else TvPalette.Border,
                 shape = shape,
             )
             .clickable(role = Role.Button, onClick = onClick)
@@ -435,7 +376,7 @@ private fun AboutActionRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (focused) AboutRed else AboutTextMuted,
+                tint = if (focused) TvPalette.Red else TvPalette.TextMuted,
                 modifier = Modifier.size(26.dp),
             )
             Spacer(Modifier.width(16.dp))
@@ -444,59 +385,77 @@ private fun AboutActionRow(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = if (focused) FontWeight.Bold else FontWeight.SemiBold,
-                    color = AboutTextPrimary,
+                    color = TvPalette.TextPrimary,
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = AboutTextMuted,
+                    color = TvPalette.TextMuted,
                     maxLines = 2,
                 )
             }
             if (badge != null) {
                 Spacer(Modifier.width(12.dp))
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = AboutRed,
-                ) {
-                    Text(
-                        text = badge,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                    )
-                }
+                TvBadge(text = badge)
             }
-            Spacer(Modifier.width(12.dp))
-            Icon(
-                imageVector = Icons.Outlined.ChevronRight,
-                contentDescription = null,
-                tint = if (focused) AboutTextPrimary else AboutTextMuted,
-                modifier = Modifier.size(24.dp),
-            )
+            if (trailing != null) {
+                Spacer(Modifier.width(12.dp))
+                trailing()
+            } else {
+                Spacer(Modifier.width(12.dp))
+                Icon(
+                    imageVector = Icons.Outlined.ChevronRight,
+                    contentDescription = null,
+                    tint = if (focused) TvPalette.TextPrimary else TvPalette.TextMuted,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun AboutPillButton(
+internal fun TvBadge(text: String) {
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = TvPalette.Red,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+        )
+    }
+}
+
+@Composable
+internal fun TvPillButton(
     text: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     var focused by remember(text) { mutableStateOf(false) }
     val scale by animateFloatAsState(
         targetValue = if (focused) 1.04f else 1f,
         animationSpec = tween(120),
-        label = "aboutButtonFocus",
+        label = "pillButtonFocus",
     )
+    val shape = RoundedCornerShape(10.dp)
+    val background = when {
+        !enabled -> TvPalette.SurfaceStrong
+        focused -> TvPalette.RedBright
+        else -> TvPalette.Red
+    }
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .scale(scale)
             .onFocusChanged { focused = it.isFocused }
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (focused) Color(0xFFFF3B57) else AboutRed)
-            .clickable(role = Role.Button, onClick = onClick)
+            .clip(shape)
+            .background(background)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 10.dp),
         color = Color.Transparent,
     ) {
@@ -504,18 +463,18 @@ private fun AboutPillButton(
             text = text,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = if (enabled) Color.White else TvPalette.TextMuted,
         )
     }
 }
 
 @Composable
-private fun AboutCloseButton(onClick: () -> Unit) {
+internal fun AboutCloseButton(onClick: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
         targetValue = if (focused) 1.03f else 1f,
         animationSpec = tween(120),
-        label = "aboutCloseFocus",
+        label = "closeFocus",
     )
     val shape = RoundedCornerShape(12.dp)
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -524,10 +483,10 @@ private fun AboutCloseButton(onClick: () -> Unit) {
                 .scale(scale)
                 .onFocusChanged { focused = it.isFocused }
                 .clip(shape)
-                .background(if (focused) Color(0xFF2B3E52) else Color(0xFF18242F))
+                .background(if (focused) TvPalette.SurfaceFocused else TvPalette.SurfaceStrong)
                 .border(
                     width = if (focused) 2.dp else 1.dp,
-                    color = if (focused) Color.White else AboutBorder,
+                    color = if (focused) Color.White else TvPalette.Border,
                     shape = shape,
                 )
                 .clickable(role = Role.Button, onClick = onClick)
@@ -538,7 +497,7 @@ private fun AboutCloseButton(onClick: () -> Unit) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
                     contentDescription = null,
-                    tint = if (focused) AboutTextPrimary else AboutTextMuted,
+                    tint = if (focused) TvPalette.TextPrimary else TvPalette.TextMuted,
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(10.dp))
@@ -546,7 +505,7 @@ private fun AboutCloseButton(onClick: () -> Unit) {
                     text = "CLOSE",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (focused) AboutTextPrimary else AboutTextMuted,
+                    color = if (focused) TvPalette.TextPrimary else TvPalette.TextMuted,
                 )
             }
         }
@@ -554,7 +513,7 @@ private fun AboutCloseButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun AboutInfoRow(label: String, value: String) {
+internal fun AboutInfoRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -564,33 +523,30 @@ private fun AboutInfoRow(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = AboutTextMuted,
+            color = TvPalette.TextMuted,
             modifier = Modifier.width(170.dp),
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = AboutTextPrimary,
+            color = TvPalette.TextPrimary,
         )
     }
 }
 
-/** Focuses the first row of a page so D-pad users always start at a known position. */
-@Composable
-private fun rememberPageFocusRequester(page: AboutPage): FocusRequester {
-    val requester = remember(page) { FocusRequester() }
-    LaunchedEffect(page, requester) {
-        repeat(ABOUT_FOCUS_ATTEMPTS) {
-            withFrameNanos { }
-            if (runCatching { requester.requestFocus() }.isSuccess) return@LaunchedEffect
-        }
-    }
-    return requester
+/** User-facing version helpers. Build-type suffixes are never part of the version string. */
+internal object AppVersionText {
+    fun display(): String = BuildConfig.VERSION_NAME.substringBefore('-')
 }
 
-/** User-facing version: build-type suffixes are never shown as part of the version. */
-private fun displayVersion(): String = BuildConfig.VERSION_NAME.substringBefore('-')
-
-private val GitHubRelease.displayVersion: String
+internal val GitHubRelease.displayVersion: String
     get() = version?.toString() ?: tagName.removePrefix("v")
+
+/** Maps an update check result to a short, non-technical status line for the settings page. */
+internal fun UpdateCheckResult.statusText(): String = when (this) {
+    is UpdateCheckResult.Available -> "Update available: ${release.displayVersion}"
+    is UpdateCheckResult.Current -> "Up to date"
+    is UpdateCheckResult.Unavailable -> reason
+    is UpdateCheckResult.Failed -> "Unable to check updates"
+}

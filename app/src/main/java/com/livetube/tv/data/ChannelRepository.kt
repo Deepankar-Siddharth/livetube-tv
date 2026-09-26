@@ -1,6 +1,7 @@
 package com.livetube.tv.data
 
 import android.content.Context
+import com.livetube.tv.util.Constants
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -8,10 +9,21 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.nio.charset.StandardCharsets
 
-/** Owns the offline-first channel state used by the UI. */
+/** What a channel refresh did with the remote document. */
+sealed interface ChannelRefreshResult {
+    data class Updated(val document: ChannelDocument) : ChannelRefreshResult
+    data class Current(val document: ChannelDocument) : ChannelRefreshResult
+    data class Failed(val reason: String) : ChannelRefreshResult
+}
+
+/**
+ * Owns the offline-first channel state used by the UI.
+ *
+ * The repository stays the single owner of the document; synchronisation policy, timestamps
+ * and user-facing status are layered on top by [ChannelSyncManager].
+ */
 class ChannelRepository(context: Context) {
     private val appContext = context.applicationContext
     private val cache = ChannelCache(appContext)
@@ -32,25 +44,30 @@ class ChannelRepository(context: Context) {
         }
     }
 
-    suspend fun refresh(): Boolean {
+    suspend fun refresh(): ChannelRefreshResult {
         _refreshing.value = true
         return try {
-            val fetched = remote.fetch() ?: return false
+            if (Constants.channelsUrl() == null) {
+                return ChannelRefreshResult.Failed(SYNC_NOT_CONFIGURED)
+            }
+            val fetched = remote.fetch()
+                ?: return ChannelRefreshResult.Failed(UNABLE_TO_SYNC)
             val current = _document.value
-            if (fetched.dataVersion > current.dataVersion) {
+            if (fetched.isNewerThan(current)) {
                 // Never replace a newer local document with an older remote one.
                 cache.save(fetched)
                 _document.value = fetched
                 _usingCachedData.value = false
-            } else if (fetched == current) {
+                ChannelRefreshResult.Updated(fetched)
+            } else {
                 // An identical remote document proves that the local copy is current.
-                _usingCachedData.value = false
+                if (fetched.sameRevisionAs(current)) _usingCachedData.value = false
+                ChannelRefreshResult.Current(current)
             }
-            true
         } catch (error: CancellationException) {
             throw error
         } catch (_: Exception) {
-            false
+            ChannelRefreshResult.Failed(UNABLE_TO_SYNC)
         } finally {
             _refreshing.value = false
         }
@@ -70,4 +87,118 @@ class ChannelRepository(context: Context) {
             channels = emptyList(),
         )
     }
+
+    companion object {
+        const val UNABLE_TO_SYNC = "Unable to sync channels"
+        const val SYNC_NOT_CONFIGURED = "Channel sync is not configured in this build"
+    }
+}
+
+/**
+ * Downloads, validates and applies the GitHub-hosted channel document.
+ *
+ * The manager owns synchronisation policy: it runs the refresh in the background, records when
+ * the last successful sync happened, and exposes a small status object for the settings UI. No
+ * Compose or other UI code belongs here.
+ */
+class ChannelSyncManager(
+    private val channelRepository: ChannelRepository,
+    private val settingsRepository: SettingsRepository,
+) {
+    private val _status = MutableStateFlow(ChannelSyncStatus())
+    val status: StateFlow<ChannelSyncStatus> = _status.asStateFlow()
+
+    init {
+        // Start from the guide the app already has so the count is correct before the first sync.
+        val document = channelRepository.document.value
+        _status.value = ChannelSyncStatus(
+            state = if (document.channels.isEmpty()) {
+                ChannelSyncState.FAILED
+            } else {
+                ChannelSyncState.UP_TO_DATE
+            },
+            channelCount = document.channels.size,
+            dataVersion = document.dataVersion,
+        )
+    }
+
+    /** Keeps the guide current on every launch without blocking startup. */
+    fun syncOnLaunch(scope: CoroutineScope) {
+        scope.launch(Dispatchers.IO) { sync() }
+    }
+
+    suspend fun sync(): ChannelSyncResult {
+        val previous = _status.value
+        _status.value = previous.copy(state = ChannelSyncState.SYNCING, message = null)
+        val result = try {
+            when (val refresh = channelRepository.refresh()) {
+                is ChannelRefreshResult.Updated -> {
+                    settingsRepository.recordChannelSync()
+                    ChannelSyncResult.Updated(
+                        channelCount = refresh.document.channels.size,
+                        dataVersion = refresh.document.dataVersion,
+                    )
+                }
+
+                is ChannelRefreshResult.Current -> {
+                    settingsRepository.recordChannelSync()
+                    ChannelSyncResult.UpToDate(channelCount = refresh.document.channels.size)
+                }
+
+                is ChannelRefreshResult.Failed -> ChannelSyncResult.Failed(refresh.reason)
+            }
+        } catch (error: CancellationException) {
+            _status.value = previous.copy(state = ChannelSyncState.FAILED, message = UNABLE_TO_SYNC)
+            throw error
+        } catch (_: Exception) {
+            _status.value = previous.copy(state = ChannelSyncState.FAILED, message = UNABLE_TO_SYNC)
+            ChannelSyncResult.Failed(UNABLE_TO_SYNC)
+        }
+        val syncedAt = System.currentTimeMillis()
+        _status.value = when (result) {
+            is ChannelSyncResult.Updated -> ChannelSyncStatus(
+                state = ChannelSyncState.UPDATED,
+                lastSyncMillis = syncedAt,
+                channelCount = result.channelCount,
+                dataVersion = result.dataVersion,
+            )
+
+            is ChannelSyncResult.UpToDate -> ChannelSyncStatus(
+                state = ChannelSyncState.UP_TO_DATE,
+                lastSyncMillis = syncedAt,
+                channelCount = result.channelCount,
+            )
+
+            is ChannelSyncResult.Failed -> previous.copy(
+                state = ChannelSyncState.FAILED,
+                message = result.reason,
+            )
+        }
+        return result
+    }
+
+    companion object {
+        const val UNABLE_TO_SYNC = ChannelRepository.UNABLE_TO_SYNC
+    }
+}
+
+enum class ChannelSyncState {
+    SYNCING,
+    UP_TO_DATE,
+    UPDATED,
+    FAILED,
+}
+
+data class ChannelSyncStatus(
+    val state: ChannelSyncState = ChannelSyncState.UP_TO_DATE,
+    val lastSyncMillis: Long = 0L,
+    val channelCount: Int = 0,
+    val dataVersion: Int = 0,
+    val message: String? = null,
+)
+
+sealed interface ChannelSyncResult {
+    data class Updated(val channelCount: Int, val dataVersion: Int) : ChannelSyncResult
+    data class UpToDate(val channelCount: Int) : ChannelSyncResult
+    data class Failed(val reason: String) : ChannelSyncResult
 }

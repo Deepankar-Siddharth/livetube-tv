@@ -48,34 +48,64 @@ object NetworkUtils {
         destination: File,
         headers: Map<String, String> = emptyMap(),
         maxBytes: Long = Constants.MAX_APK_BYTES,
+        onProgress: ((downloadedBytes: Long, totalBytes: Long) -> Unit)? = null,
+        resume: Boolean = false,
     ): DownloadResult {
         destination.parentFile?.mkdirs()
         val temporary = File(destination.parentFile, "${destination.name}.part")
-        if (temporary.exists()) temporary.delete()
-        val connection = openConnection(url, "GET", headers)
+        val resumeFrom = if (resume && temporary.isFile && temporary.length() in 1..maxBytes) {
+            temporary.length()
+        } else {
+            temporary.delete()
+            0L
+        }
+        val requestHeaders = if (resumeFrom > 0L) {
+            headers + ("Range" to "bytes=$resumeFrom-")
+        } else {
+            headers
+        }
+        val connection = openConnection(url, "GET", requestHeaders)
         try {
             val code = connection.responseCode
             if (code !in 200..299) {
                 throw IOException("HTTP $code ${connection.responseMessage ?: ""}".trim())
             }
-            val declaredLength = connection.contentLength.toLong()
-            if (declaredLength > maxBytes) throw IOException("Download is larger than the limit")
+            val appending = resumeFrom > 0L && code == HttpURLConnection.HTTP_PARTIAL
+            if (resumeFrom > 0L && !appending) {
+                // The server ignored the range request, so the file has to restart.
+                temporary.delete()
+            }
+            val alreadyHave = if (appending) resumeFrom else 0L
+            val remainingHeader = connection.contentLength
+            val declaredTotal = when {
+                remainingHeader > 0 -> alreadyHave + remainingHeader
+                else -> -1L
+            }
+            if (declaredTotal > maxBytes) throw IOException("Download is larger than the limit")
             connection.inputStream.use { input ->
-                FileOutputStream(temporary).use { rawOutput ->
+                FileOutputStream(temporary, appending).use { rawOutput ->
                     BufferedOutputStream(rawOutput).use { output ->
                         val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                        var total = 0L
+                        var total = alreadyHave
+                        onProgress?.invoke(total, declaredTotal)
                         while (true) {
                             val count = input.read(buffer)
                             if (count < 0) break
                             total += count
                             if (total > maxBytes) throw IOException("Download is larger than the limit")
                             output.write(buffer, 0, count)
+                            onProgress?.invoke(total, declaredTotal)
                         }
                         output.flush()
                         rawOutput.fd.sync()
                     }
                 }
+            }
+            if (!temporary.isFile || temporary.length() == 0L) {
+                throw IOException("The download produced no data")
+            }
+            if (declaredTotal > 0L && temporary.length() != declaredTotal) {
+                throw IOException("The download is incomplete")
             }
             try {
                 try {
@@ -103,7 +133,7 @@ object NetworkUtils {
             }
             return DownloadResult(destination, connection.url.toString())
         } catch (error: Throwable) {
-            temporary.delete()
+            if (!resume) temporary.delete()
             throw error
         } finally {
             connection.disconnect()

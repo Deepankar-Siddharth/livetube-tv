@@ -38,6 +38,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Science
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Spa
 import androidx.compose.material.icons.outlined.SportsSoccer
 import androidx.compose.material.icons.outlined.Star
@@ -115,7 +116,7 @@ fun ChannelGuide(
     onModalChanged: (Boolean) -> Unit,
     onChannelSelected: (Channel) -> Unit,
     onChannelActions: (Channel) -> Unit,
-    onShowAbout: () -> Unit,
+    onShowSettings: () -> Unit,
     onInteraction: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -327,12 +328,12 @@ fun ChannelGuide(
                             )
                         }
                         GuideUtilityButton(
-                            icon = Icons.Outlined.Info,
-                            contentDescription = "About LiveTube TV",
+                            icon = Icons.Outlined.Settings,
+                            contentDescription = "Settings",
                             active = false,
                             onClick = {
                                 onInteraction()
-                                onShowAbout()
+                                onShowSettings()
                             },
                             onFocused = {
                                 focusedRow = GuideRow.CATEGORIES
