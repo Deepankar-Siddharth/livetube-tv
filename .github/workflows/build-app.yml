@@ -173,7 +173,7 @@ jobs:
           if [ -z "$apksigner_bin" ]; then
             apksigner_bin="$ANDROID_HOME/build-tools/$(ls -1 "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner"
           fi
-          "$apksigner_bin" verify --verbose --print-certs "$apk_path" | tee "$RUNNER_TEMP/apksigner.txt"
+          "$apksigner_bin" verify --verbose --print-certs "$apk_path" 2>&1 | tee "$RUNNER_TEMP/apksigner.txt"
           grep -q "Verified using v2 scheme" "$RUNNER_TEMP/apksigner.txt"
 
           if command -v apkanalyzer >/dev/null 2>&1; then
@@ -197,8 +197,11 @@ jobs:
           release_asset="$RUNNER_TEMP/release-assets/livetube-tv-$version_name.apk"
           cp "$apk_path" "$release_asset"
           sha256="$(sha256sum "$release_asset" | cut -d' ' -f1)"
-          signer_sha256="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' "$RUNNER_TEMP/apksigner.txt" | head -n1)"
-          if ! [[ "$signer_sha256" =~ ^[A-Fa-f0-9:]{95,}$ ]]; then
+          # apksigner labels differ between build-tools releases ("Signer #1 certificate
+          # SHA-256 digest:" on older tools, "V3.0 Signer: certificate SHA-256 digest:" on
+          # newer ones), so match any certificate digest line and strip colour codes.
+          signer_sha256="$(sed -e 's/\x1b\[[0-9;]*m//g' -n -e 's/^.*certificate SHA-256 digest: //p' "$RUNNER_TEMP/apksigner.txt" | head -n1 | tr -d '[:space:]')"
+          if ! [[ "$signer_sha256" =~ ^[A-Fa-f0-9:]{64,}$ ]]; then
             echo "::error::could not read the signer certificate SHA-256 digest"
             exit 1
           fi
