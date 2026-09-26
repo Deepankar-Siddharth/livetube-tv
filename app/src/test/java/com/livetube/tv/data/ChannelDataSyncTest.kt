@@ -185,6 +185,7 @@ class ChannelDataSyncTest {
         assertEquals("Ocean Exploration", parsed.channels.first().subcategory)
     }
 
+    // A catalogue may use categories the app has never seen; the guide must still show them.
     @Test
     fun guideKeepsChannelsWithUnknownCategoriesVisible() {
         val channels = listOf(
@@ -192,12 +193,11 @@ class ChannelDataSyncTest {
             channelModel("news1", 2, "News One", category = "News", subcategory = "Hindi News"),
         )
 
-        val categories = ChannelCatalog.guideCategories(channels)
-        val natureIndex = categories.indexOfFirst { it.name == "Nature & Science" }
-        val visible = ChannelCatalog.filter(channels, categories[natureIndex].id)
+        val directory = GuideDirectoryFactory.build(channels, favoriteChannelIds = emptySet())
 
-        assertTrue(natureIndex >= 0)
-        assertEquals(listOf("ocean"), visible.map { it.id })
+        assertEquals(listOf("Hindi"), directory.languageNames())
+        assertEquals(listOf("Nature & Science", "News"), directory.categoryNames("Hindi"))
+        assertEquals(listOf("ocean"), directory.channelsFor("Hindi", "Nature & Science").map { it.id })
     }
 
     @Test

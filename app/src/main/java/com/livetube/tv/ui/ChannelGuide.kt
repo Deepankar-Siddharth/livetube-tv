@@ -2,7 +2,6 @@ package com.livetube.tv.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,396 +15,286 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Article
-import androidx.compose.material.icons.outlined.ChildCare
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.MusicNote
-import androidx.compose.material.icons.outlined.Public
-import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Spa
-import androidx.compose.material.icons.outlined.SportsSoccer
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.livetube.tv.data.CategoryDefinition
 import com.livetube.tv.data.Channel
-import com.livetube.tv.data.ChannelCatalog
-import com.livetube.tv.data.GuideCategory
-import kotlinx.coroutines.launch
+import com.livetube.tv.data.GuideDirectory
+import com.livetube.tv.data.GuideDirectoryFactory
+import com.livetube.tv.data.GuideNode
 
-private val GuideRed = Color(0xFFFF1F3D)
-private val GuideSurface = Color(0xFF121C29)
-private val GuideBorder = Color(0x33FFFFFF)
-private val GuideMuted = Color(0xFF9FB1C2)
-private val GuideRowSpacing = 16.dp
-private val GuideEdgeInset = 26.dp
 
-private enum class GuideRow {
-    CATEGORIES,
-    CHANNELS,
-}
+
+private const val MAX_FOCUS_ATTEMPTS = 6
 
 /**
- * Compact two-line TV guide rendered over the lower edge of the video.
+ * Three-row TV guide rendered over the lower edge of the video.
  *
- * The guide intentionally has no permanent third navigation row. Subcategories stay
- * available through the small filter action and are applied to the channel row only.
+ * Language, category and channels all come from [directory], which the repository derives from the
+ * active channel document, so the guide never carries its own channel list and a newer catalogue
+ * can add languages or categories without a code change.
+ *
+ * Opening the guide is a pure read: it resolves the playing channel into a language, a category and
+ * a card, scrolls that card into view and focuses it. Playback is only touched when the viewer
+ * presses OK on a channel, so LEFT and RIGHT can be used to browse freely.
  */
 @Composable
 fun ChannelGuide(
-    channels: List<Channel>,
+    directory: GuideDirectory,
     favoriteChannelIds: Set<String>,
-    selectedChannelId: String?,
+    favoriteChannels: List<Channel>,
+    playingChannelId: String?,
     liveChannelId: String?,
-    preferredCategoryId: String?,
-    subcategoryFilterId: String,
+    showFavorites: Boolean,
+    preferredLanguage: String?,
+    preferredCategory: String?,
+    onLanguageChange: (String) -> Unit,
     onCategoryChange: (String) -> Unit,
-    onSubcategoryFilterChange: (String) -> Unit,
-    onModalChanged: (Boolean) -> Unit,
+    onFavoritesChange: (Boolean) -> Unit,
+    onShowSettings: () -> Unit,
     onChannelSelected: (Channel) -> Unit,
     onChannelActions: (Channel) -> Unit,
-    onShowSettings: () -> Unit,
     onInteraction: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // The guide never changes playback while it opens: it only works out where to place focus.
-    val guideCategories = remember(channels) { ChannelCatalog.guideCategories(channels) }
-    val playingChannel = channels.firstOrNull { it.id == selectedChannelId }
-    val initialCategoryIndex = remember(channels, selectedChannelId, preferredCategoryId) {
-        GuideFocus.initialTarget(
-            channels = channels,
-            playingChannelId = selectedChannelId,
-            preferredCategoryId = preferredCategoryId,
-            guideCategories = guideCategories,
-        ).categoryIndex
-    }
+    val requesters = remember { mutableMapOf<String, FocusRequester>() }
+    val languageState = rememberLazyListState()
+    val categoryState = rememberLazyListState()
+    val channelState = rememberLazyListState()
 
-    var focusedCategoryIndex by remember { mutableIntStateOf(initialCategoryIndex) }
-    var showSubcategoryDialog by remember { mutableStateOf(false) }
-    var pendingCategoryFocus by remember { mutableStateOf<Int?>(null) }
-    var pendingChannelFocus by remember { mutableStateOf<Int?>(null) }
-
-    val selectedCategoryId = guideCategories[focusedCategoryIndex].id
-    val availableSubcategories = remember(selectedCategoryId, channels) {
-        buildList {
-            add(CategoryFilter(ChannelCatalog.ALL_SUBCATEGORY_ID, "All subcategories"))
-            if (selectedCategoryId != ChannelCatalog.FAVORITES_CATEGORY_ID) {
-                ChannelCatalog.subcategoriesForChannels(channels, selectedCategoryId)
-                    .forEach { add(CategoryFilter(it.id, it.name)) }
-            }
-        }
-    }
-    // A remembered filter from another category is meaningless; fall back to "All".
-    val activeSubcategoryId = subcategoryFilterId
-        .takeIf { id -> availableSubcategories.any { it.id == id } }
-        ?: ChannelCatalog.ALL_SUBCATEGORY_ID
-    val visibleChannels = remember(channels, selectedCategoryId, activeSubcategoryId, favoriteChannelIds) {
-        ChannelCatalog.filter(
-            channels = channels,
-            categoryId = selectedCategoryId,
-            subcategoryId = activeSubcategoryId,
-            favoriteChannelIds = favoriteChannelIds,
+    // Opening position: the playing channel wins, the remembered position is only a fallback for a
+    // device that is not playing anything yet.
+    val openingTarget = remember(directory, playingChannelId, preferredLanguage, preferredCategory) {
+        GuideDirectoryFactory.resolve(
+            directory = directory,
+            playingChannelId = playingChannelId,
+            preferredLanguage = preferredLanguage,
+            preferredCategory = preferredCategory,
         )
     }
 
-    // The playing channel is focused in the row that is actually on screen. A subcategory filter
-    // that hides it leaves focus on the first visible channel.
-    val initialChannelIndex = GuideFocus.indexOfChannel(visibleChannels, selectedChannelId)
-    val initialFocusesChannel = playingChannel != null &&
-        visibleChannels.any { it.id == playingChannel.id }
-    var focusedChannelIndex by remember { mutableIntStateOf(initialChannelIndex) }
-    var focusedRow by remember {
-        mutableStateOf(if (initialFocusesChannel) GuideRow.CHANNELS else GuideRow.CATEGORIES)
+    var currentLanguage by remember { mutableStateOf(openingTarget.language) }
+    var currentCategory by remember { mutableStateOf(openingTarget.category) }
+    var languageIndex by remember {
+        mutableStateOf(
+            directory.languageNames().indexOf(openingTarget.language).coerceAtLeast(0),
+        )
+    }
+    var categoryIndex by remember {
+        mutableStateOf(
+            directory.categoryNames(openingTarget.language).indexOf(openingTarget.category)
+                .coerceAtLeast(0),
+        )
+    }
+    var channelIndex by remember { mutableStateOf(openingTarget.channelIndex) }
+
+    val languages = directory.languageNodes
+    val categories = directory.categoriesFor(currentLanguage)
+    val visibleChannels = if (showFavorites) {
+        favoriteChannels
+    } else {
+        directory.channelsFor(currentLanguage, currentCategory)
     }
 
-    val categoryFocusRequesters = remember(guideCategories) {
-        guideCategories.associate { it.id to FocusRequester() }
-    }
-    val channelFocusRequesters = remember(visibleChannels) {
-        visibleChannels.associate { it.id to FocusRequester() }
-    }
-    val categoryListState = rememberLazyListState()
-    val channelListState = rememberLazyListState()
-    val guideScope = rememberCoroutineScope()
-    val categoriesCanScrollLeft by remember { derivedStateOf { categoryListState.canScrollBackward } }
-    val categoriesCanScrollRight by remember { derivedStateOf { categoryListState.canScrollForward } }
-    val channelsCanScrollLeft by remember { derivedStateOf { channelListState.canScrollBackward } }
-    val channelsCanScrollRight by remember { derivedStateOf { channelListState.canScrollForward } }
+    fun requesterFor(key: String): FocusRequester = requesters.getOrPut(key) { FocusRequester() }
 
-    fun selectCategory(index: Int) {
-        val clamped = index.coerceIn(0, guideCategories.lastIndex)
-        if (clamped != focusedCategoryIndex) {
-            focusedCategoryIndex = clamped
-            focusedChannelIndex = 0
-            guideScope.launch { channelListState.scrollToItem(0) }
-            onCategoryChange(guideCategories[clamped].id)
-        }
-        onInteraction()
+    /** Applies a language change: categories are rebuilt and a fitting category is selected. */
+    fun applyLanguage(languageName: String) {
+        if (languageName == currentLanguage) return
+        currentLanguage = languageName
+        val category = GuideDirectoryFactory.categoryAfterLanguageChange(
+            directory = directory,
+            languageName = languageName,
+            preferredCategory = currentCategory,
+        )
+        currentCategory = category
+        categoryIndex = directory.categoryNames(languageName).indexOf(category).coerceAtLeast(0)
+        // Keep the playing channel selected when it lives in the new language and category.
+        val channels = directory.channelsFor(languageName, category)
+        channelIndex = channels.indexOfFirst { it.id == playingChannelId }.takeIf { it >= 0 } ?: 0
+        onLanguageChange(languageName)
+        onCategoryChange(category)
     }
 
-    fun requestCategoryFocus(index: Int) {
-        focusedCategoryIndex = index.coerceIn(0, guideCategories.lastIndex)
-        focusedRow = GuideRow.CATEGORIES
-        pendingCategoryFocus = focusedCategoryIndex
+    /** Applies a category change: only the channel row follows, playback is untouched. */
+    fun applyCategory(categoryName: String) {
+        if (categoryName == currentCategory) return
+        currentCategory = categoryName
+        val channels = directory.channelsFor(currentLanguage, categoryName)
+        channelIndex = channels.indexOfFirst { it.id == playingChannelId }.takeIf { it >= 0 } ?: 0
+        onCategoryChange(categoryName)
     }
 
-    fun requestChannelFocus(index: Int) {
-        focusedChannelIndex = index.coerceIn(0, (visibleChannels.size - 1).coerceAtLeast(0))
-        focusedRow = GuideRow.CHANNELS
-        pendingChannelFocus = focusedChannelIndex
-    }
-
-    // Scroll the target row so the requested item is composed before asking for focus.
-    // LazyRow disposes off-screen items, so requesting focus without this dead-ends D-pad.
-    LaunchedEffect(pendingCategoryFocus) {
-        val index = pendingCategoryFocus ?: return@LaunchedEffect
-        val category = guideCategories.getOrNull(index) ?: return@LaunchedEffect
-        categoryListState.scrollToItem(index)
-        val requester = categoryFocusRequesters.getValue(category.id)
-        var attached = false
+    /**
+     * Focuses one item of a row, retrying over a few frames while the item is attached.
+     *
+     * A LazyRow disposes items that scroll out of view, and a request aimed at a disposed node is
+     * dropped, so the caller scrolls first and the request is simply retried. This is only used
+     * for the initial focus on the playing channel: every later D-pad move is handled by Compose
+     * focus search, which moves between the rows with UP and DOWN and along a row with LEFT and
+     * RIGHT.
+     */
+    suspend fun requestFocusNow(key: String) {
         repeat(MAX_FOCUS_ATTEMPTS) {
-            if (attached) return@LaunchedEffect
             withFrameNanos { }
-            attached = runCatching { requester.requestFocus() }.isSuccess
+            if (runCatching { requesterFor(key).requestFocus() }.isSuccess) return
         }
-        pendingCategoryFocus = null
     }
-
-    LaunchedEffect(pendingChannelFocus) {
-        val index = pendingChannelFocus ?: return@LaunchedEffect
-        val channel = visibleChannels.getOrNull(index) ?: return@LaunchedEffect
-        channelListState.scrollToItem(index)
-        val requester = channelFocusRequesters.getValue(channel.id)
-        var attached = false
-        repeat(MAX_FOCUS_ATTEMPTS) {
-            if (attached) return@LaunchedEffect
-            withFrameNanos { }
-            attached = runCatching { requester.requestFocus() }.isSuccess
-        }
-        pendingChannelFocus = null
-    }
-
     // On open the playing channel is focused; nothing is selected and playback is untouched.
     LaunchedEffect(Unit) {
-        if (initialFocusesChannel) {
-            requestChannelFocus(initialChannelIndex)
+        val index = if (showFavorites && favoriteChannels.isNotEmpty()) {
+            favoriteChannels.indexOfFirst { it.id == playingChannelId }.takeIf { it >= 0 } ?: 0
         } else {
-            requestCategoryFocus(initialCategoryIndex)
+            openingTarget.channelIndex
         }
+        val channel = visibleChannels.getOrNull(index) ?: return@LaunchedEffect
+        channelIndex = index
+        val key = channelKey(channel)
+        channelState.scrollToItem(index)
+        requestFocusNow(key)
     }
 
-    LaunchedEffect(showSubcategoryDialog) { onModalChanged(showSubcategoryDialog) }
-    DisposableEffect(Unit) {
-        onDispose { onModalChanged(false) }
+    // The catalogue can change under an open guide; keep the focus index inside the new list.
+    LaunchedEffect(visibleChannels) {
+        if (visibleChannels.isEmpty()) return@LaunchedEffect
+        if (channelIndex !in visibleChannels.indices) channelIndex = 0
     }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .wrapContentHeight()
-            .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
+            .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
             .background(
                 Brush.verticalGradient(
-                    listOf(Color(0xE60A1018), Color(0xF2121C29), Color(0xFA070B12)),
+                    listOf(Color(0xF20A0C10), Color(0xFA0A0C10), Color(0xFF07090C)),
                 ),
             )
             .navigationBarsPadding()
-            .padding(start = 22.dp, end = 22.dp, top = 12.dp, bottom = 12.dp)
-            .onPreviewKeyEvent { event ->
-                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                when (event.key) {
-                    Key.DirectionUp -> if (focusedRow == GuideRow.CHANNELS) {
-                        requestCategoryFocus(focusedCategoryIndex)
-                        onInteraction()
-                        true
-                    } else {
-                        false
-                    }
-
-                    Key.DirectionDown -> if (focusedRow == GuideRow.CATEGORIES && visibleChannels.isNotEmpty()) {
-                        requestChannelFocus(focusedChannelIndex)
-                        onInteraction()
-                        true
-                    } else {
-                        false
-                    }
-
-                    else -> false
-                }
-            },
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(start = 28.dp, end = 28.dp, top = 8.dp, bottom = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(TvMetrics.GuideRowSpacing),
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            LazyRow(
-                state = categoryListState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                contentPadding = PaddingValues(horizontal = GuideEdgeInset),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                itemsIndexed(
-                    items = guideCategories,
-                    key = { _, category -> category.id },
-                ) { index, category ->
-                    CategoryChip(
-                        category = category,
-                        selected = index == focusedCategoryIndex,
-                        focusRequester = categoryFocusRequesters.getValue(category.id),
-                        onFocused = {
-                            focusedCategoryIndex = index
-                            focusedRow = GuideRow.CATEGORIES
-                            selectCategory(index)
-                        },
-                        onClick = { selectCategory(index) },
-                    )
-                }
-                item(key = "guide-utilities") {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (availableSubcategories.size > 1) {
-                            val filterActive = activeSubcategoryId != ChannelCatalog.ALL_SUBCATEGORY_ID
-                            val filterName = availableSubcategories
-                                .firstOrNull { it.id == activeSubcategoryId }
-                                ?.name
-                                .orEmpty()
-                            GuideUtilityButton(
-                                icon = Icons.Outlined.Tune,
-                                contentDescription = if (filterActive) {
-                                    "Subcategory filter active: $filterName"
-                                } else {
-                                    "Filter subcategory"
-                                },
-                                active = filterActive,
-                                onClick = {
-                                    onInteraction()
-                                    showSubcategoryDialog = true
-                                },
-                                onFocused = {
-                                    focusedRow = GuideRow.CATEGORIES
-                                    onInteraction()
-                                },
-                            )
-                        }
-                        GuideUtilityButton(
-                            icon = Icons.Outlined.Settings,
-                            contentDescription = "Settings",
-                            active = false,
-                            onClick = {
-                                onInteraction()
-                                onShowSettings()
-                            },
-                            onFocused = {
-                                focusedRow = GuideRow.CATEGORIES
-                                onInteraction()
-                            },
-                        )
-                    }
-                }
-            }
-            HorizontalScrollIndicator(
-                icon = Icons.Outlined.ChevronLeft,
-                visible = categoriesCanScrollLeft,
-                modifier = Modifier.align(Alignment.CenterStart),
-                alignToStart = true,
-            )
-            HorizontalScrollIndicator(
-                icon = Icons.Outlined.ChevronRight,
-                visible = categoriesCanScrollRight,
-                modifier = Modifier.align(Alignment.CenterEnd),
-            )
-        }
+        GuideHeader(
+            showFavorites = showFavorites,
+            favoritesEnabled = favoriteChannelIds.isNotEmpty(),
+            onToggleFavorites = {
+                onInteraction()
+                onFavoritesChange(!showFavorites)
+            },
+            onShowSettings = {
+                onInteraction()
+                onShowSettings()
+            },
+        )
+
+        NodeRow(
+            label = "Language",
+            nodes = languages,
+            selectedName = currentLanguage,
+            listState = languageState,
+            requesters = requesters,
+            onIndexFocused = { index ->
+                val node = languages.getOrNull(index) ?: return@NodeRow
+                languageIndex = index
+                // Browsing the catalogue again leaves the local favorites view.
+                if (showFavorites) onFavoritesChange(false)
+                applyLanguage(node.name)
+                onInteraction()
+            },
+            onSelected = { node ->
+                if (showFavorites) onFavoritesChange(false)
+                applyLanguage(node.name)
+                onInteraction()
+            },
+            keyPrefix = LANGUAGE_PREFIX,
+        )
+
+        NodeRow(
+            label = "Category",
+            nodes = categories,
+            selectedName = currentCategory,
+            listState = categoryState,
+            requesters = requesters,
+            onIndexFocused = { index ->
+                val node = categories.getOrNull(index) ?: return@NodeRow
+                categoryIndex = index
+                if (showFavorites) onFavoritesChange(false)
+                applyCategory(node.name)
+                onInteraction()
+            },
+            onSelected = { node ->
+                if (showFavorites) onFavoritesChange(false)
+                applyCategory(node.name)
+                onInteraction()
+            },
+            keyPrefix = CATEGORY_PREFIX,
+        )
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(128.dp),
+                .height(TvMetrics.CardHeight + 8.dp),
         ) {
             if (visibleChannels.isEmpty()) {
                 Text(
-                    text = if (selectedCategoryId == ChannelCatalog.FAVORITES_CATEGORY_ID) {
-                        "No favorites yet. Focus a channel and hold OK to add it."
+                    text = if (showFavorites) {
+                        "No favorites yet. Hold OK on a channel to add it."
                     } else {
-                        "No channels in this category"
+                        "No channels available"
                     },
-                    color = GuideMuted,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TvPalette.TextMuted,
                     modifier = Modifier.align(Alignment.Center),
                 )
             } else {
                 LazyRow(
-                    state = channelListState,
+                    state = channelState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        start = GuideEdgeInset,
-                        end = GuideEdgeInset,
-                        top = 6.dp,
-                        bottom = 6.dp,
-                    ),
-                    horizontalArrangement = Arrangement.spacedBy(GuideRowSpacing),
+                    contentPadding = PaddingValues(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    itemsIndexed(
-                        items = visibleChannels,
-                        key = { _, channel -> channel.id },
-                    ) { index, channel ->
+                    items(
+                        count = visibleChannels.size,
+                        key = { index -> channelKey(visibleChannels[index]) },
+                    ) { index ->
+                        val channel = visibleChannels[index]
                         ChannelCard(
                             channel = channel,
-                            selected = channel.id == selectedChannelId,
+                            selected = channel.id == playingChannelId,
                             favorite = channel.id in favoriteChannelIds,
                             isLive = channel.id == liveChannelId,
                             onClick = {
@@ -417,272 +306,309 @@ fun ChannelGuide(
                                 onChannelActions(channel)
                             },
                             onFocus = {
-                                focusedChannelIndex = index
-                                focusedRow = GuideRow.CHANNELS
+                                channelIndex = index
                                 onInteraction()
                             },
-                            focusRequester = channelFocusRequesters.getValue(channel.id),
-                            modifier = Modifier.width(190.dp),
+                            focusRequester = requesterFor(channelKey(channel)),
+                            modifier = Modifier.width(TvMetrics.CardWidth),
                         )
                     }
                 }
             }
-            HorizontalScrollIndicator(
+            val canScrollLeft by remember { derivedStateOf { channelState.canScrollBackward } }
+            val canScrollRight by remember { derivedStateOf { channelState.canScrollForward } }
+            ScrollEdge(
                 icon = Icons.Outlined.ChevronLeft,
-                visible = visibleChannels.size > 1 && channelsCanScrollLeft,
+                visible = visibleChannels.size > 1 && canScrollLeft,
                 modifier = Modifier.align(Alignment.CenterStart),
-                alignToStart = true,
+                atStart = true,
             )
-            HorizontalScrollIndicator(
+            ScrollEdge(
                 icon = Icons.Outlined.ChevronRight,
-                visible = visibleChannels.size > 1 && channelsCanScrollRight,
+                visible = visibleChannels.size > 1 && canScrollRight,
                 modifier = Modifier.align(Alignment.CenterEnd),
             )
         }
     }
+}
 
-    if (showSubcategoryDialog) {
-        SubcategoryFilterDialog(
-            filters = availableSubcategories,
-            selectedId = activeSubcategoryId,
-            onSelect = { subcategoryId ->
-                onSubcategoryFilterChange(subcategoryId)
-                showSubcategoryDialog = false
-                onInteraction()
+private const val LANGUAGE_PREFIX = "language:"
+private const val CATEGORY_PREFIX = "category:"
+private const val CHANNEL_PREFIX = "channel:"
+
+private fun languageKey(node: GuideNode): String = LANGUAGE_PREFIX + node.name
+
+private fun categoryKey(node: GuideNode): String = CATEGORY_PREFIX + node.name
+
+private fun channelKey(channel: Channel): String = CHANNEL_PREFIX + channel.id
+
+/** Slim guide header with the local favorites view and the settings entry. */
+@Composable
+private fun GuideHeader(
+    showFavorites: Boolean,
+    favoritesEnabled: Boolean,
+    onToggleFavorites: () -> Unit,
+    onShowSettings: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = if (showFavorites) "Favorites" else "Guide",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = TvPalette.TextSecondary,
+        )
+        Spacer(Modifier.weight(1f))
+        FavoritesToggle(
+            active = showFavorites,
+            enabled = favoritesEnabled,
+            onClick = onToggleFavorites,
+        )
+        Spacer(Modifier.width(8.dp))
+        GuideIconAction(
+            icon = Icons.Outlined.Settings,
+            contentDescription = "Settings",
+            onClick = onShowSettings,
+        )
+    }
+}
+
+@Composable
+private fun FavoritesToggle(
+    active: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    var focused by remember { mutableStateOf(false) }
+    val shape = RoundedCornerShape(TvMetrics.CornerSmall)
+    Row(
+        modifier = Modifier
+            .clip(shape)
+            .background(if (active) TvPalette.RedWash else Color.Transparent)
+            .border(
+                1.dp,
+                when {
+                    focused -> TvPalette.FocusRing
+                    active -> TvPalette.Red
+                    enabled -> TvPalette.Border
+                    else -> Color.Transparent
+                },
+                shape,
+            )
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Star,
+            contentDescription = null,
+            tint = when {
+                !enabled -> TvPalette.TextMuted
+                active -> TvPalette.Red
+                else -> TvPalette.TextSecondary
             },
-            onFocusChanged = onInteraction,
-            onDismiss = {
-                showSubcategoryDialog = false
-                onInteraction()
+            modifier = Modifier.size(13.dp),
+        )
+        Text(
+            text = "Favorites",
+            style = MaterialTheme.typography.labelMedium,
+            color = when {
+                !enabled -> TvPalette.TextMuted
+                active -> TvPalette.TextPrimary
+                else -> TvPalette.TextSecondary
             },
         )
     }
 }
 
-private const val MAX_FOCUS_ATTEMPTS = 5
+@Composable
+private fun GuideIconAction(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+) {
+    var focused by remember { mutableStateOf(false) }
+    val shape = RoundedCornerShape(TvMetrics.CornerSmall)
+    Box(
+        modifier = Modifier
+            .size(30.dp)
+            .clip(shape)
+            .background(if (focused) TvPalette.CardFocused else Color.Transparent)
+            .border(1.dp, if (focused) TvPalette.FocusRing else TvPalette.Border, shape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .onFocusChanged { focused = it.isFocused },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = if (focused) TvPalette.TextPrimary else TvPalette.TextSecondary,
+            modifier = Modifier.size(16.dp),
+        )
+    }
+}
+
+/**
+ * One compact navigation row of languages or categories.
+ *
+ * Items are text only: the selected item is underlined with the LiveTube accent and the focused
+ * item gains a hairline outline, which keeps these rows visually lighter than the channel cards.
+ */
+@Composable
+private fun NodeRow(
+    label: String,
+    nodes: List<GuideNode>,
+    selectedName: String,
+    listState: LazyListState,
+    requesters: MutableMap<String, FocusRequester>,
+    onIndexFocused: (Int) -> Unit,
+    onSelected: (GuideNode) -> Unit,
+    keyPrefix: String,
+) {
+    val canScrollLeft by remember { derivedStateOf { listState.canScrollBackward } }
+    val canScrollRight by remember { derivedStateOf { listState.canScrollForward } }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = TvPalette.TextMuted,
+            modifier = Modifier.width(64.dp),
+        )
+        Box(modifier = Modifier.weight(1f)) {
+            if (nodes.isEmpty()) {
+                Text(
+                    text = "None available",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TvPalette.TextMuted,
+                    modifier = Modifier.align(Alignment.CenterStart),
+                )
+            } else {
+                LazyRow(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(TvMetrics.GuideRowHeight),
+                    contentPadding = PaddingValues(horizontal = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    items(count = nodes.size, key = { index -> keyPrefix + nodes[index].name }) { index ->
+                        val node = nodes[index]
+                        NodeChip(
+                            text = node.name,
+                            selected = node.name == selectedName,
+                            focusRequester = requesters.getOrPut(keyPrefix + node.name) {
+                                FocusRequester()
+                            },
+                            onFocused = { onIndexFocused(index) },
+                            onClick = { onSelected(node) },
+                        )
+                    }
+                }
+            }
+            ScrollEdge(
+                icon = Icons.Outlined.ChevronLeft,
+                visible = canScrollLeft,
+                modifier = Modifier.align(Alignment.CenterStart),
+                atStart = true,
+            )
+            ScrollEdge(
+                icon = Icons.Outlined.ChevronRight,
+                visible = canScrollRight,
+                modifier = Modifier.align(Alignment.CenterEnd),
+            )
+        }
+    }
+}
 
 @Composable
-private fun CategoryChip(
-    category: GuideCategory,
+private fun NodeChip(
+    text: String,
     selected: Boolean,
     focusRequester: FocusRequester,
     onFocused: () -> Unit,
     onClick: () -> Unit,
 ) {
-    var focused by remember(category.id) { mutableStateOf(false) }
+    var isFocused by remember(text) { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue = if (focused) 1.04f else 1f,
-        animationSpec = tween(120),
-        label = "categoryFocus",
+        targetValue = if (isFocused) 1.03f else 1f,
+        animationSpec = tween(110),
+        label = "nodeChipFocus",
     )
-    Surface(
+    val shape = RoundedCornerShape(TvMetrics.CornerSmall)
+    Column(
         modifier = Modifier
-            .height(44.dp)
-            .scale(scale)
+            .clip(shape)
+            .background(if (isFocused) TvPalette.CardFocused else Color.Transparent)
+            .border(
+                if (isFocused) 1.5.dp else 1.dp,
+                when {
+                    isFocused -> TvPalette.FocusRing
+                    else -> Color.Transparent
+                },
+                shape,
+            )
             .focusRequester(focusRequester)
             .onFocusChanged {
-                focused = it.isFocused
-                if (it.isFocused) onFocused()
+                val value = it.isFocused
+                if (value == isFocused) return@onFocusChanged
+                isFocused = value
+                if (value) onFocused()
             }
-            .clickable(role = Role.Button, onClick = onClick),
-        shape = RoundedCornerShape(10.dp),
-        color = when {
-            selected -> GuideRed.copy(alpha = 0.95f)
-            focused -> GuideSurface
-            else -> Color(0xB3121C29)
-        },
-        contentColor = if (selected) Color.White else Color(0xFFE8EEF5),
-        border = BorderStroke(
-            width = if (focused) 2.dp else 1.dp,
-            color = if (focused) Color.White else if (selected) GuideRed else GuideBorder,
-        ),
+            .semantics(mergeDescendants = true) {
+                contentDescription = if (selected) "$text, selected" else text
+            }
+            .clickable(role = Role.Tab, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 13.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = categoryIcon(category.id),
-                contentDescription = null,
-                tint = if (selected) Color.White else GuideRed,
-                modifier = Modifier.size(19.dp),
-            )
-            Spacer(Modifier.width(7.dp))
-            Text(
-                text = category.name,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = if (selected || focused) FontWeight.Bold else FontWeight.Medium,
-                maxLines = 1,
-            )
-        }
-    }
-}
-
-@Composable
-private fun GuideUtilityButton(
-    icon: ImageVector,
-    contentDescription: String,
-    active: Boolean,
-    onClick: () -> Unit,
-    onFocused: () -> Unit,
-) {
-    var focused by remember { mutableStateOf(false) }
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier
-            .size(44.dp)
-            .onFocusChanged {
-                focused = it.isFocused
-                if (it.isFocused) onFocused()
-            },
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            tint = when {
-                focused -> Color.White
-                active -> GuideRed
-                else -> GuideMuted
-            },
-            modifier = Modifier.size(20.dp),
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) TvPalette.TextPrimary else TvPalette.TextSecondary,
+            maxLines = 1,
+        )
+        // The accent underline marks the selected language or category.
+        Box(
+            modifier = Modifier
+                .padding(top = 3.dp)
+                .width(if (selected) 16.dp else 0.dp)
+                .height(2.dp)
+                .background(if (selected) TvPalette.Red else Color.Transparent),
         )
     }
 }
 
 @Composable
-private fun BoxScope.HorizontalScrollIndicator(
+private fun BoxScope.ScrollEdge(
     icon: ImageVector,
     visible: Boolean,
+    atStart: Boolean = false,
     modifier: Modifier = Modifier,
-    alignToStart: Boolean = false,
 ) {
     if (!visible) return
-    val scrim = if (alignToStart) {
-        Brush.horizontalGradient(listOf(Color.Transparent, Color(0xF2070B12)))
+    val scrim = if (atStart) {
+        Brush.horizontalGradient(listOf(Color.Transparent, Color(0xF20A0C10)))
     } else {
-        Brush.horizontalGradient(listOf(Color(0xF2070B12), Color.Transparent))
+        Brush.horizontalGradient(listOf(Color(0xF20A0C10), Color.Transparent))
     }
-    // matchParentSize keeps the scrim out of the guide's height calculation.
     Box(
         modifier = modifier
             .matchParentSize()
             .background(scrim),
-        contentAlignment = if (alignToStart) Alignment.CenterStart else Alignment.CenterEnd,
+        contentAlignment = if (atStart) Alignment.CenterStart else Alignment.CenterEnd,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color.White.copy(alpha = 0.75f),
+            tint = TvPalette.TextSecondary,
             modifier = Modifier
-                .padding(horizontal = 7.dp)
-                .size(24.dp),
+                .padding(horizontal = 2.dp)
+                .size(18.dp),
         )
     }
 }
-
-@Composable
-private fun SubcategoryFilterDialog(
-    filters: List<CategoryFilter>,
-    selectedId: String,
-    onSelect: (String) -> Unit,
-    onFocusChanged: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val firstFocusRequester = rememberDialogFocusRequester()
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
-    ) {
-        Surface(
-            modifier = Modifier
-                .widthIn(min = 320.dp, max = 480.dp)
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-            color = Color(0xFF121C29),
-            border = BorderStroke(1.dp, GuideBorder),
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Text(
-                    text = "Filter channels",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                )
-                Text(
-                    text = "Choose a subcategory for the channel row.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = GuideMuted,
-                )
-                Column(
-                    modifier = Modifier
-                        .heightIn(max = 360.dp)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    filters.forEachIndexed { index, filter ->
-                        val selected = filter.id == selectedId
-                        var focused by remember(filter.id) { mutableStateOf(false) }
-                        val scale by animateFloatAsState(
-                            targetValue = if (focused) 1.02f else 1f,
-                            animationSpec = tween(120),
-                            label = "filterFocus",
-                        )
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(46.dp)
-                                .scale(scale)
-                                .then(if (index == 0) Modifier.focusRequester(firstFocusRequester) else Modifier)
-                                .onFocusChanged {
-                                    focused = it.isFocused
-                                    if (it.isFocused) onFocusChanged()
-                                }
-                                .clip(RoundedCornerShape(9.dp))
-                                .background(if (selected) GuideRed.copy(alpha = 0.92f) else Color(0x661A2836))
-                                .then(
-                                    if (focused) {
-                                        Modifier.border(BorderStroke(2.dp, Color.White), RoundedCornerShape(9.dp))
-                                    } else {
-                                        Modifier
-                                    },
-                                )
-                                .clickable(role = Role.Button) { onSelect(filter.id) }
-                                .padding(horizontal = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = filter.name,
-                                color = if (selected) Color.White else Color(0xFFE8EEF5),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                            )
-                        }
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    TextButton(onClick = onDismiss) { Text("Close") }
-                }
-            }
-        }
-    }
-}
-
-private fun categoryIcon(categoryId: String): ImageVector = when (categoryId) {
-    ChannelCatalog.FAVORITES_CATEGORY_ID -> Icons.Outlined.Star
-    "news" -> Icons.AutoMirrored.Outlined.Article
-    "regional" -> Icons.Outlined.Public
-    "devotional" -> Icons.Outlined.Spa
-    "kids_family" -> Icons.Outlined.ChildCare
-    "knowledge" -> Icons.Outlined.Science
-    "music_entertainment" -> Icons.Outlined.MusicNote
-    "sports_live" -> Icons.Outlined.SportsSoccer
-    else -> Icons.AutoMirrored.Outlined.Article
-}
-
-private data class CategoryFilter(val id: String, val name: String)

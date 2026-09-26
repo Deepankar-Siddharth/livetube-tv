@@ -1,27 +1,37 @@
 package com.livetube.tv.ui
 
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 
+/**
+ * Exit confirmation.
+ *
+ * Focus starts on Cancel, so a stray OK never closes the app, and the focused action is marked
+ * with a bright outline plus a red tint rather than a large filled selection box.
+ */
 @Composable
 fun ExitDialog(onExit: () -> Unit, onStay: () -> Unit) {
-    val stayFocusRequester = rememberDialogFocusRequester()
-    AlertDialog(
+    val cancelFocusRequester = rememberDialogFocusRequester()
+    TvDialog(
+        title = "Exit LiveTube TV?",
+        subtitle = "You can return to the live guide at any time.",
         onDismissRequest = onStay,
-        title = { Text("EXIT LIVETUBE TV?", fontWeight = FontWeight.Bold) },
-        text = { Text("You can return to the live guide at any time.") },
-        confirmButton = { Button(onClick = onExit) { Text("EXIT") } },
-        dismissButton = {
-            OutlinedButton(
+    ) {
+        Spacer(Modifier.height(4.dp))
+        TvDialogActions {
+            TvDialogButton(
+                text = "Cancel",
                 onClick = onStay,
-                modifier = Modifier.focusRequester(stayFocusRequester),
-            ) { Text("STAY") }
-        },
-    )
+                focusRequester = cancelFocusRequester,
+            )
+            TvDialogButton(
+                text = "Exit",
+                onClick = onExit,
+                style = TvActionStyle.DANGER,
+            )
+        }
+    }
 }

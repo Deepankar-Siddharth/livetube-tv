@@ -132,18 +132,18 @@ fun SettingsScreen(
         ) {
             Surface(
                 modifier = Modifier
-                    .widthIn(max = 760.dp)
-                    .fillMaxWidth(0.9f)
-                    .fillMaxHeight(0.9f),
-                shape = RoundedCornerShape(26.dp),
+                    .widthIn(max = 560.dp)
+                    .fillMaxWidth(0.62f)
+                    .fillMaxHeight(0.82f),
+                shape = RoundedCornerShape(TvMetrics.CornerLarge),
                 color = TvPalette.Surface,
                 border = BorderStroke(1.dp, TvPalette.Border),
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 28.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     SettingsHeader(
                         title = when (page) {

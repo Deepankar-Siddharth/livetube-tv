@@ -354,7 +354,7 @@ internal fun AboutActionRow(
         animationSpec = tween(120),
         label = "aboutRowFocus",
     )
-    val shape = RoundedCornerShape(16.dp)
+    val shape = RoundedCornerShape(TvMetrics.CornerMedium)
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -364,12 +364,12 @@ internal fun AboutActionRow(
             .clip(shape)
             .background(if (focused) TvPalette.CardFocused else TvPalette.Card)
             .border(
-                width = if (focused) 2.dp else 1.dp,
-                color = if (focused) Color.White else TvPalette.Border,
+                width = 1.dp,
+                color = if (focused) TvPalette.FocusRing else TvPalette.Border,
                 shape = shape,
             )
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 9.dp),
+            .padding(horizontal = 14.dp, vertical = 7.dp),
         color = Color.Transparent,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -377,13 +377,13 @@ internal fun AboutActionRow(
                 imageVector = icon,
                 contentDescription = null,
                 tint = if (focused) TvPalette.Red else TvPalette.TextMuted,
-                modifier = Modifier.size(26.dp),
+                modifier = Modifier.size(20.dp),
             )
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (focused) FontWeight.Bold else FontWeight.SemiBold,
                     color = TvPalette.TextPrimary,
                 )
@@ -407,7 +407,7 @@ internal fun AboutActionRow(
                     imageVector = Icons.Outlined.ChevronRight,
                     contentDescription = null,
                     tint = if (focused) TvPalette.TextPrimary else TvPalette.TextMuted,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
@@ -468,48 +468,15 @@ internal fun TvPillButton(
     }
 }
 
+/** Shared close action so the About pages use the same focus treatment as every other dialog. */
 @Composable
 internal fun AboutCloseButton(onClick: () -> Unit) {
-    var focused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (focused) 1.03f else 1f,
-        animationSpec = tween(120),
-        label = "closeFocus",
+    TvDialogButton(
+        text = "Close",
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        focusRequester = rememberDialogFocusRequester(),
     )
-    val shape = RoundedCornerShape(12.dp)
-    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Surface(
-            modifier = Modifier
-                .scale(scale)
-                .onFocusChanged { focused = it.isFocused }
-                .clip(shape)
-                .background(if (focused) TvPalette.SurfaceFocused else TvPalette.SurfaceStrong)
-                .border(
-                    width = if (focused) 2.dp else 1.dp,
-                    color = if (focused) Color.White else TvPalette.Border,
-                    shape = shape,
-                )
-                .clickable(role = Role.Button, onClick = onClick)
-                .padding(horizontal = 28.dp, vertical = 9.dp),
-            color = Color.Transparent,
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Outlined.Close,
-                    contentDescription = null,
-                    tint = if (focused) TvPalette.TextPrimary else TvPalette.TextMuted,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    text = "CLOSE",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (focused) TvPalette.TextPrimary else TvPalette.TextMuted,
-                )
-            }
-        }
-    }
 }
 
 @Composable

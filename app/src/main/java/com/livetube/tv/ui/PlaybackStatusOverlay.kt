@@ -4,11 +4,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,8 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,14 +30,14 @@ import com.livetube.tv.player.PlaybackPhase
 import com.livetube.tv.player.PlaybackState
 import kotlinx.coroutines.delay
 
-private const val TRANSIENT_STATUS_MS = 4_000L
+private const val TRANSIENT_STATUS_MS = 3_500L
 
 /**
  * Small, self-dismissing playback status surface.
  *
- * Normal playback stays completely free of a permanent information box. While a stream is
- * being resolved a lightweight chip is shown, and retry / about stay available as a
- * focused surface while playback is failing.
+ * Normal playback stays completely free of a permanent information box. While a stream is being
+ * resolved a lightweight chip is shown, and retry / about stay available as a focused surface while
+ * playback is failing. No technical stream values are shown: only what the viewer needs.
  */
 @Composable
 fun PlaybackStatusOverlay(
@@ -78,25 +77,25 @@ fun PlaybackStatusOverlay(
     } else if (isTransient && transientVisible) {
         Surface(
             modifier = modifier,
-            shape = RoundedCornerShape(10.dp),
-            color = Color(0xD9101923),
-            border = BorderStroke(1.dp, Color(0x33FFFFFF)),
+            shape = RoundedCornerShape(TvMetrics.CornerMedium),
+            color = TvPalette.Surface,
+            border = BorderStroke(1.dp, TvPalette.Border),
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
                     text = channel?.name.orEmpty(),
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TvPalette.TextPrimary,
                 )
                 Text(
                     text = playback.message.orEmpty(),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFB8C8D8),
+                    color = TvPalette.TextSecondary,
                 )
             }
         }
@@ -128,51 +127,53 @@ private fun PlaybackProblemCard(
     }
 
     Surface(
-        modifier = modifier.widthIn(max = 520.dp),
-        shape = RoundedCornerShape(14.dp),
-        color = Color(0xEE101923),
-        border = BorderStroke(1.dp, Color(0x66FFB4AB)),
+        modifier = modifier.widthIn(max = 440.dp),
+        shape = RoundedCornerShape(TvMetrics.CornerMedium),
+        color = TvPalette.Surface,
+        border = BorderStroke(1.dp, TvPalette.BorderStrong),
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 13.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
                 text = if (playback.phase == PlaybackPhase.ENDED) "Playback ended" else "Playback problem",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = TvPalette.TextPrimary,
             )
             channelName?.let { name ->
                 Text(
                     text = name,
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFF8B9D),
+                    fontWeight = FontWeight.SemiBold,
+                    color = TvPalette.RedBright,
                 )
             }
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFFFFD6D2),
+                style = MaterialTheme.typography.bodySmall,
+                color = TvPalette.TextSecondary,
             )
             Text(
                 text = if (usingCachedData) "Using saved channel guide" else "Channel guide synced",
-                style = MaterialTheme.typography.labelMedium,
-                color = Color(0xFF9FB1C2),
+                style = MaterialTheme.typography.labelSmall,
+                color = TvPalette.TextMuted,
             )
+            Spacer(Modifier.height(4.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
+                TvDialogButton(
+                    text = "Retry",
                     onClick = onRetry,
-                    modifier = Modifier
-                        .focusRequester(retryFocusRequester)
-                        .onFocusChanged { onOverlayFocusChanged(it.isFocused) },
-                ) { Text("RETRY") }
-                Button(
+                    style = TvActionStyle.PRIMARY,
+                    focusRequester = retryFocusRequester,
+                    onFocused = { onOverlayFocusChanged(true) },
+                )
+                TvDialogButton(
+                    text = "About",
                     onClick = onAbout,
-                    modifier = Modifier.onFocusChanged { onOverlayFocusChanged(it.isFocused) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF263544)),
-                ) { Text("ABOUT") }
+                    onFocused = { onOverlayFocusChanged(true) },
+                )
             }
         }
     }

@@ -39,9 +39,9 @@ import androidx.media3.ui.PlayerView
 import com.livetube.tv.R
 import com.livetube.tv.data.AppSettings
 import com.livetube.tv.data.Channel
-import com.livetube.tv.data.ChannelCatalog
 import com.livetube.tv.data.ChannelDocument
 import com.livetube.tv.data.ChannelSyncStatus
+import com.livetube.tv.data.GuideDirectoryFactory
 import com.livetube.tv.player.PlaybackController
 import com.livetube.tv.player.PlaybackPhase
 import com.livetube.tv.player.PlaybackState
@@ -87,7 +87,15 @@ fun MainScreen(
     onRemoteNavigationModeChanged: (Boolean) -> Unit,
     onExit: () -> Unit,
 ) {
-    val enabledChannels = document.enabledChannels()
+    val enabledChannels = remember(document) { document.enabledChannels() }
+    // The guide navigates the catalogue as language -> category -> channel. Building the
+    // directory once per document keeps opening the guide free of parsing or sorting work.
+    val guideDirectory = remember(enabledChannels) {
+        GuideDirectoryFactory.build(enabledChannels, favoriteChannelIds)
+    }
+    val favoriteChannels = remember(enabledChannels, favoriteChannelIds) {
+        enabledChannels.filter { it.id in favoriteChannelIds }
+    }
     val context = LocalContext.current
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
     var guideVisible by remember { mutableStateOf(false) }
@@ -98,10 +106,9 @@ fun MainScreen(
     var overlayHasFocus by remember { mutableStateOf(false) }
     var interaction by remember { mutableIntStateOf(0) }
     var guideModalVisible by remember { mutableStateOf(false) }
-    var rememberedCategoryId by rememberSaveable { mutableStateOf<String?>(null) }
-    var subcategoryFilterId by rememberSaveable {
-        mutableStateOf(ChannelCatalog.ALL_SUBCATEGORY_ID)
-    }
+    var guideLanguage by rememberSaveable { mutableStateOf<String?>(null) }
+    var guideCategory by rememberSaveable { mutableStateOf<String?>(null) }
+    var showFavorites by rememberSaveable { mutableStateOf(false) }
 
     fun openSettings(page: SettingsPage = SettingsPage.ROOT) {
         settingsPage = page
@@ -294,20 +301,21 @@ fun MainScreen(
 
         if (guideVisible) {
             ChannelGuide(
-                channels = enabledChannels,
+                directory = guideDirectory,
                 favoriteChannelIds = favoriteChannelIds,
-                selectedChannelId = selectedId,
+                favoriteChannels = favoriteChannels,
+                playingChannelId = selectedId,
                 liveChannelId = playback.channel?.id?.takeIf { playback.isLive },
-                preferredCategoryId = rememberedCategoryId,
-                subcategoryFilterId = subcategoryFilterId,
-                onCategoryChange = { categoryId ->
-                    rememberedCategoryId = categoryId
-                    if (subcategoryFilterId != ChannelCatalog.ALL_SUBCATEGORY_ID) {
-                        subcategoryFilterId = ChannelCatalog.ALL_SUBCATEGORY_ID
-                    }
+                showFavorites = showFavorites,
+                preferredLanguage = guideLanguage,
+                preferredCategory = guideCategory,
+                onLanguageChange = { guideLanguage = it },
+                onCategoryChange = { guideCategory = it },
+                onFavoritesChange = { showFavorites = it },
+                onShowSettings = {
+                    openSettings()
+                    interaction += 1
                 },
-                onSubcategoryFilterChange = { subcategoryFilterId = it },
-                onModalChanged = { guideModalVisible = it },
                 onChannelSelected = { channel ->
                     selectedId = channel.id
                     onSelectChannel(channel)
@@ -316,10 +324,6 @@ fun MainScreen(
                 },
                 onChannelActions = { channel ->
                     actionChannel = channel
-                    interaction += 1
-                },
-                onShowSettings = {
-                    openSettings()
                     interaction += 1
                 },
                 onInteraction = { interaction += 1 },

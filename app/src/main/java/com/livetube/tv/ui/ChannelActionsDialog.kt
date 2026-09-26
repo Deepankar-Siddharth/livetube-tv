@@ -1,21 +1,21 @@
 package com.livetube.tv.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.livetube.tv.data.Channel
 
+/**
+ * Channel actions, reached by holding OK on a channel card.
+ *
+ * This is also how a channel is added to or removed from favorites, so it stays available in the
+ * guide. Focus starts on Play, and every action shares the dialog focus treatment.
+ */
 @Composable
 fun ChannelActionsDialog(
     channel: Channel,
@@ -25,38 +25,31 @@ fun ChannelActionsDialog(
     onDismiss: () -> Unit,
 ) {
     val playFocusRequester = rememberDialogFocusRequester()
-    AlertDialog(
+    TvDialog(
+        title = channel.name,
+        subtitle = "${channel.language} • ${channel.category} • ${channel.subcategory}",
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = channel.name,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(channel.subcategory)
-                Text(
-                    text = "${channel.language} • ${channel.region}",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        },
-        confirmButton = {
-            Button(
+    ) {
+        Spacer(Modifier.height(4.dp))
+        TvDialogActions {
+            TvDialogButton(
+                text = "Play",
                 onClick = onPlay,
-                modifier = Modifier.focusRequester(playFocusRequester),
-            ) { Text("PLAY") }
-        },
-        dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { onSetFavorite(!favorite) }) {
-                    Text(if (favorite) "REMOVE FAVORITE" else "ADD FAVORITE")
-                }
-                TextButton(onClick = onDismiss) { Text("CLOSE") }
-            }
-        },
-        modifier = Modifier,
-    )
+                style = TvActionStyle.PRIMARY,
+                focusRequester = playFocusRequester,
+            )
+            TvDialogButton(
+                text = if (favorite) "Remove favorite" else "Add favorite",
+                onClick = { onSetFavorite(!favorite) },
+            )
+            TvDialogButton(text = "Close", onClick = onDismiss)
+        }
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = "Favorites stay on this device and are never part of the channel guide data.",
+            style = MaterialTheme.typography.labelSmall,
+            color = TvPalette.TextMuted,
+            fontWeight = FontWeight.Normal,
+        )
+    }
 }
