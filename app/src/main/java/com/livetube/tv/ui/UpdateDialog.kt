@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -37,6 +38,7 @@ fun UpdateDialog(
         ?.groupValues
         ?.get(1)
         ?: BuildConfig.NEWPIPE_EXTRACTOR_VERSION.removePrefix("v")
+    val updateFocusRequester = rememberDialogFocusRequester()
     AlertDialog(
         onDismissRequest = onLater,
         title = { Text("UPDATE AVAILABLE", fontWeight = FontWeight.Bold) },
@@ -57,7 +59,10 @@ fun UpdateDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onInstall) { Text("UPDATE") }
+            Button(
+                onClick = onInstall,
+                modifier = Modifier.focusRequester(updateFocusRequester),
+            ) { Text("UPDATE") }
         },
         dismissButton = {
             OutlinedButton(onClick = onLater) { Text("LATER") }
@@ -67,6 +72,7 @@ fun UpdateDialog(
 
 @Composable
 fun AboutDialog(onDismiss: () -> Unit) {
+    val closeFocusRequester = rememberDialogFocusRequester()
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -87,17 +93,28 @@ fun AboutDialog(onDismiss: () -> Unit) {
                 Text("Data source: validated channels.json with offline cache")
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("CLOSE") } },
+        confirmButton = {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.focusRequester(closeFocusRequester),
+            ) { Text("CLOSE") }
+        },
     )
 }
 
 @Composable
 fun ExitDialog(onExit: () -> Unit, onStay: () -> Unit) {
+    val stayFocusRequester = rememberDialogFocusRequester()
     AlertDialog(
         onDismissRequest = onStay,
         title = { Text("EXIT LIVETUBE TV?", fontWeight = FontWeight.Bold) },
         text = { Text("You can return to the live guide at any time.") },
         confirmButton = { Button(onClick = onExit) { Text("EXIT") } },
-        dismissButton = { OutlinedButton(onClick = onStay) { Text("STAY") } },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onStay,
+                modifier = Modifier.focusRequester(stayFocusRequester),
+            ) { Text("STAY") }
+        },
     )
 }

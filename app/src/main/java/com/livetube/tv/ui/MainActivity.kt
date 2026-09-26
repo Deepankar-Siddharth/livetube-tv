@@ -12,7 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import com.livetube.tv.LiveTubeApplication
 import com.livetube.tv.data.ChannelRepository
 import com.livetube.tv.extractor.YouTubeExtractor
@@ -23,12 +22,17 @@ import com.livetube.tv.update.UpdateCheckResult
 import com.livetube.tv.update.UpdateInstaller
 import com.livetube.tv.update.UpdateManager
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 
 private const val LAUNCH_BRANDING_DURATION_MS = 1_100L
 
 class MainActivity : ComponentActivity() {
-    private val remoteKeyEvents = MutableSharedFlow<Int>(replay = 1, extraBufferCapacity = 16)
+    /**
+     * Remote navigation keys are only intercepted while the bottom guide is closed.
+     * While the guide is visible Compose owns the D-pad so its two rows stay navigable.
+     */
+    private val remoteKeyEvents = MutableSharedFlow<Int>(extraBufferCapacity = 16)
     private var captureRemoteNavigation = true
     private lateinit var playbackController: PlaybackController
 

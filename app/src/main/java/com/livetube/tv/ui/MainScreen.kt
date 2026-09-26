@@ -36,6 +36,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.livetube.tv.R
 import com.livetube.tv.data.Channel
+import com.livetube.tv.data.ChannelCatalog
 import com.livetube.tv.data.ChannelDocument
 import com.livetube.tv.player.PlaybackController
 import com.livetube.tv.player.PlaybackPhase
@@ -64,7 +65,6 @@ fun MainScreen(
     onDismissUpdate: () -> Unit,
     remoteKeyEvents: SharedFlow<Int>,
     onRemoteNavigationModeChanged: (Boolean) -> Unit,
-    onOverlayFocusChanged: (Boolean) -> Unit = {},
     onExit: () -> Unit,
 ) {
     val enabledChannels = document.enabledChannels()
@@ -75,35 +75,40 @@ fun MainScreen(
     var actionChannel by remember { mutableStateOf<Channel?>(null) }
     var overlayHasFocus by remember { mutableStateOf(false) }
     var interaction by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(guideVisible, updateResult, showExitDialog, showAboutDialog, actionChannel, overlayHasFocus) {
-        val modalVisible = updateResult is UpdateCheckResult.Available ||
-            showExitDialog ||
-            showAboutDialog ||
-            actionChannel != null
-        onRemoteNavigationModeChanged(!guideVisible && !modalVisible && !overlayHasFocus)
+    var guideModalVisible by remember { mutableStateOf(false) }
+    var rememberedCategoryId by rememberSaveable { mutableStateOf<String?>(null) }
+    var subcategoryFilterId by rememberSaveable {
+        mutableStateOf(ChannelCatalog.ALL_SUBCATEGORY_ID)
     }
 
     LaunchedEffect(playback.channel) {
         if (playback.channel == null) overlayHasFocus = false
     }
 
+    // The activity only captures remote keys while the guide is closed, so the two guide
+    // rows keep their own D-pad handling. This is toggled synchronously on every change
+    // to keep activity and Compose key ownership in sync.
+    fun setGuideVisible(visible: Boolean) {
+        guideVisible = visible
+        onRemoteNavigationModeChanged(!visible)
+    }
+
     fun handleRemoteKey(key: Key): Boolean {
         interaction += 1
-        if (!guideVisible && overlayHasFocus && key != Key.Back) {
+        if (!guideVisible && overlayHasFocus) {
             return when (key) {
                 Key.Enter, Key.NumPadEnter, Key.DirectionCenter -> false
                 Key.DirectionLeft, Key.DirectionRight -> {
                     if (playback.phase == PlaybackPhase.ERROR || playback.phase == PlaybackPhase.ENDED) {
                         false
                     } else {
-                        guideVisible = true
+                        setGuideVisible(true)
                         true
                     }
                 }
 
                 Key.DirectionUp, Key.DirectionDown -> {
-                    guideVisible = true
+                    setGuideVisible(true)
                     true
                 }
 
@@ -120,16 +125,11 @@ fun MainScreen(
             Key.DirectionCenter,
             -> {
                 if (!guideVisible) {
-                    guideVisible = true
+                    setGuideVisible(true)
                     true
                 } else {
                     false
                 }
-            }
-
-            Key.Back -> {
-                if (guideVisible) guideVisible = false else showExitDialog = true
-                true
             }
 
             else -> false
@@ -163,11 +163,27 @@ fun MainScreen(
         }
     }
 
-    LaunchedEffect(guideVisible, interaction, actionChannel) {
-        if (guideVisible && actionChannel == null) {
+    LaunchedEffect(guideVisible, interaction, actionChannel, guideModalVisible) {
+        if (guideVisible && actionChannel == null && !guideModalVisible) {
             delay(Constants.GUIDE_TIMEOUT_MS)
-            guideVisible = false
+            setGuideVisible(false)
         }
+    }
+
+    LaunchedEffect(
+        updateResult,
+        showExitDialog,
+        showAboutDialog,
+        actionChannel,
+        overlayHasFocus,
+        guideModalVisible,
+    ) {
+        val modalVisible = updateResult is UpdateCheckResult.Available ||
+            showExitDialog ||
+            showAboutDialog ||
+            actionChannel != null ||
+            guideModalVisible
+        onRemoteNavigationModeChanged(!guideVisible && !modalVisible && !overlayHasFocus)
     }
 
     val updateAvailable = updateResult as? UpdateCheckResult.Available
@@ -177,7 +193,7 @@ fun MainScreen(
             showExitDialog -> showExitDialog = false
             showAboutDialog -> showAboutDialog = false
             updateAvailable != null -> onDismissUpdate()
-            guideVisible -> guideVisible = false
+            guideVisible -> setGuideVisible(false)
             else -> showExitDialog = true
         }
     }
@@ -188,6 +204,8 @@ fun MainScreen(
             .background(Color.Black)
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                // BACK is owned by the BackHandler below so its behavior stays predictable.
+                if (event.key == Key.Back) return@onPreviewKeyEvent false
                 handleRemoteKey(event.key)
             },
     ) {
@@ -224,17 +242,18 @@ fun MainScreen(
             }
         }
 
-        if (!guideVisible) {
-            InfoOverlay(
-                channel = playback.channel,
-                playback = playback,
-                usingCachedData = usingCachedData,
-                onRetry = onRetryPlayback,
-                onAbout = { showAboutDialog = true },
-                onOverlayFocusChanged = { overlayHasFocus = it },
-                modifier = Modifier.align(Alignment.TopStart),
-            )
-        }
+        PlaybackStatusOverlay(
+            channel = playback.channel,
+            playback = playback,
+            usingCachedData = usingCachedData,
+            requestFocus = !guideVisible,
+            onRetry = onRetryPlayback,
+            onAbout = { showAboutDialog = true },
+            onOverlayFocusChanged = { overlayHasFocus = it },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp),
+        )
 
         if (isRefreshing && !guideVisible) {
             Text(
@@ -251,12 +270,33 @@ fun MainScreen(
                 favoriteChannelIds = favoriteChannelIds,
                 selectedChannelId = selectedId,
                 liveChannelId = playback.channel?.id?.takeIf { playback.isLive },
+                preferredCategoryId = rememberedCategoryId,
+                subcategoryFilterId = subcategoryFilterId,
+                onCategoryChange = { categoryId ->
+                    rememberedCategoryId = categoryId
+                    if (subcategoryFilterId != ChannelCatalog.ALL_SUBCATEGORY_ID) {
+                        subcategoryFilterId = ChannelCatalog.ALL_SUBCATEGORY_ID
+                    }
+                },
+                onSubcategoryFilterChange = { subcategoryFilterId = it },
+                onModalChanged = { guideModalVisible = it },
                 onChannelSelected = { channel ->
+                    selectedId = channel.id
+                    onSelectChannel(channel)
+                    setGuideVisible(false)
+                    interaction += 1
+                },
+                onChannelActions = { channel ->
                     actionChannel = channel
                     interaction += 1
                 },
+                onShowAbout = {
+                    showAboutDialog = true
+                    setGuideVisible(false)
+                    interaction += 1
+                },
                 onInteraction = { interaction += 1 },
-                onClose = { guideVisible = false },
+                modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
     }
@@ -269,6 +309,7 @@ fun MainScreen(
                 selectedId = channel.id
                 onSelectChannel(channel)
                 actionChannel = null
+                setGuideVisible(false)
                 interaction += 1
             },
             onSetFavorite = { favorite -> onSetFavorite(channel, favorite) },

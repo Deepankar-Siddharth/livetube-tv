@@ -1,18 +1,21 @@
 package com.livetube.tv.ui
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Star
@@ -29,14 +32,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,6 +48,14 @@ import coil.compose.AsyncImage
 import com.livetube.tv.R
 import com.livetube.tv.data.Channel
 
+private val LiveTubeRed = Color(0xFFFF1F3D)
+
+/**
+ * Horizontal channel card used by the bottom guide channel row.
+ *
+ * OK starts playback, holding OK opens the channel actions (play / favorite).
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChannelCard(
     channel: Channel,
@@ -51,15 +63,20 @@ fun ChannelCard(
     favorite: Boolean,
     isLive: Boolean,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     onFocus: () -> Unit,
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester? = null,
 ) {
     var focused by remember(channel.id) { mutableStateOf(false) }
-    val accent = Color(0xFFFF1F3D)
+    val scale by animateFloatAsState(
+        targetValue = if (focused) 1.06f else 1f,
+        animationSpec = tween(120),
+        label = "channelFocus",
+    )
     val borderColor = when {
         focused -> Color.White
-        selected -> accent
+        selected -> LiveTubeRed
         else -> Color.White.copy(alpha = 0.18f)
     }
     val cardDescription = buildString {
@@ -68,105 +85,112 @@ fun ChannelCard(
         if (favorite) append(", favorite")
         if (isLive) append(", live")
         if (selected) append(", now playing")
+        append(", hold OK for channel actions")
     }
+
     Card(
         modifier = modifier
-            .height(138.dp)
+            .height(104.dp)
+            .scale(scale)
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .onFocusChanged {
                 focused = it.isFocused
                 if (it.isFocused) onFocus()
             }
-            .clickable(role = Role.Button, onClick = onClick)
-            .semantics {
-                contentDescription = cardDescription
-                role = Role.Button
-            },
-        shape = RoundedCornerShape(12.dp),
+            .semantics(mergeDescendants = true) { contentDescription = cardDescription }
+            .combinedClickable(
+                role = Role.Button,
+                onLongClick = onLongClick,
+                onClick = onClick,
+            ),
+        shape = RoundedCornerShape(13.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (selected) Color(0xFF29131B) else Color(0xF2121D29),
+            containerColor = if (selected) Color(0xFF2A131C) else Color(0xF2121D29),
         ),
-        border = BorderStroke(if (selected || focused) 3.dp else 1.dp, borderColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (focused) 10.dp else 2.dp),
+        border = BorderStroke(if (focused || selected) 2.dp else 1.dp, borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (focused) 12.dp else 2.dp),
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(5.dp),
+                .padding(horizontal = 10.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AsyncImage(
-                    model = channel.logo,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(62.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentScale = ContentScale.Fit,
-                    error = androidx.compose.ui.res.painterResource(R.drawable.livetube_icon),
-                )
-                Spacer(Modifier.size(10.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = channel.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-                        color = Color.White,
-                        maxLines = 2,
-                    )
-                    Text(
-                        text = channel.subcategory,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFB8C8D8),
-                        maxLines = 1,
-                    )
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
+            AsyncImage(
+                model = channel.logo,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(54.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentScale = ContentScale.Fit,
+                error = painterResource(R.drawable.livetube_icon),
+            )
+            Spacer(Modifier.width(10.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                if (favorite) {
-                    Icon(
-                        imageVector = Icons.Rounded.Star,
-                        contentDescription = null,
-                        tint = accent,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-                if (selected) {
-                    Text(
-                        text = "NOW PLAYING",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = accent,
-                        maxLines = 1,
-                    )
-                } else if (isLive) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(7.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(accent),
-                        )
-                        Spacer(Modifier.size(4.dp))
-                        Text(
-                            text = "LIVE",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFF8B9D),
+                Text(
+                    text = channel.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = if (selected || focused) FontWeight.Bold else FontWeight.SemiBold,
+                    color = Color.White,
+                    maxLines = 2,
+                )
+                Text(
+                    text = channel.subcategory,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFB8C8D8),
+                    maxLines = 1,
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (favorite) {
+                        Icon(
+                            imageVector = Icons.Rounded.Star,
+                            contentDescription = null,
+                            tint = LiveTubeRed,
+                            modifier = Modifier.size(14.dp),
                         )
                     }
-                } else {
-                    Text(
-                        text = "${channel.language} • ${channel.region}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF91A5B8),
-                        maxLines = 1,
-                    )
+                    when {
+                        selected -> Text(
+                            text = "NOW PLAYING",
+                            color = Color(0xFFFF8B9D),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                        )
+
+                        isLive -> Row(
+                            horizontalArrangement = Arrangement.spacedBy(5.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(LiveTubeRed),
+                            )
+                            Text(
+                                text = "LIVE",
+                                color = Color(0xFFFF8B9D),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                            )
+                        }
+
+                        else -> Text(
+                            text = "${channel.language} • ${channel.region}",
+                            color = Color(0xFF91A5B8),
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                        )
+                    }
                 }
             }
         }

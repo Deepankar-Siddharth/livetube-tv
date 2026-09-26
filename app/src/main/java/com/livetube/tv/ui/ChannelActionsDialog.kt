@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.livetube.tv.data.Channel
@@ -23,6 +24,7 @@ fun ChannelActionsDialog(
     onSetFavorite: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val playFocusRequester = rememberDialogFocusRequester()
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -42,7 +44,10 @@ fun ChannelActionsDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onPlay) { Text("PLAY") }
+            Button(
+                onClick = onPlay,
+                modifier = Modifier.focusRequester(playFocusRequester),
+            ) { Text("PLAY") }
         },
         dismissButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

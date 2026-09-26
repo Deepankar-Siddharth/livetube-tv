@@ -355,17 +355,28 @@ GitHub or network failure never prevents cached channel viewing.
 
 ## TV remote controls
 
-- Fullscreen: any D-pad direction or OK opens the guide.
-- Guide sidebar Up/Down: move through the fixed eight-category hierarchy, beginning with Favorites.
-- Guide sidebar Right: enter the selected category's subcategory row.
-- Guide grid arrows: move spatially through large channel cards; Left returns toward the subcategories and category sidebar.
-- Channel OK: open Play and Add/Remove Favorite actions; no playback occurs merely by moving focus.
-- Guide Back: close the guide or the open channel-action dialog first.
-- Fullscreen Back: show an exit confirmation when no guide/dialog is open.
-- Five seconds without interaction: close the guide and return to video.
-- About and retry actions are focusable with a remote.
+The playback view is clean fullscreen video. The guide is a compact two-line overlay at the
+bottom of the screen: line 1 is categories, line 2 is channels.
 
-The video surface remains behind the guide, and Media3 reports buffering, adaptive-resolution availability, and live state without inventing latency measurements.
+- Fullscreen: any D-pad direction or OK opens the bottom guide.
+- Guide Up/Down: move between the category row and the channel row.
+- Guide Left/Right: move within the focused row; the row scrolls horizontally and shows edge
+  indicators when more items exist.
+- Category OK: select the focused category; the channel row refreshes immediately.
+- Channel OK: start or switch playback to that channel and close the guide.
+- Channel OK (hold): open the channel actions (Play and Add/Remove Favorite).
+- Filter action (end of the category row): pick a subcategory for the channel row; the action
+  stays highlighted while a filter is active and the choice is remembered between openings.
+- About action (end of the category row): open the About dialog.
+- Guide Back: close the guide, or the open dialog, first.
+- Fullscreen Back: show an exit confirmation when no guide/dialog is open.
+- Five seconds without interaction: close the guide and return to video; playback continues
+  while the guide is open.
+- Playback problems raise a small focused status card with Retry and About; About and retry
+  actions are focusable with a remote.
+
+The video surface remains behind the guide, and Media3 reports buffering, adaptive-resolution
+availability, and live state without inventing latency measurements.
 
 ## Troubleshooting
 
