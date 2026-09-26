@@ -1,33 +1,229 @@
 #EXTM3U
-#EXTINF:-1 tvg-chno="1" tvg-id="mirror_now" tvg-logo="https://ui-avatars.com/api/?name=Mirror%20Now" group-title="News",Mirror Now
-https://www.youtube.com/@mirrornow/live
-#EXTINF:-1 tvg-chno="2" tvg-id="aaj_tak" tvg-logo="https://ui-avatars.com/api/?name=Aaj%20Tak" group-title="News",Aaj Tak
+#EXTINF:-1 tvg-chno="1" tvg-id="tipsofficial" tvg-logo="https://yt3.googleusercontent.com/zSQrmF-U4JwDv9QalTMOuEEWjGDjM9LvNgahKGGks6WKhe6XEOFf2C4ErQ-1-J9o2wFrHtIw5A=s900-c-k-c0x00ffffff-no-rj" group-title="Music & Audio",Tips Official
+https://www.youtube.com/@tipsofficial/live
+#EXTINF:-1 tvg-chno="2" tvg-id="rdcgujarati" tvg-logo="https://yt3.googleusercontent.com/ozm3oY_fw7LKDbXPtQP6yLxgjxKn4Ea4KucKrCP_4GhQR1ceQtLSB0WTMOSMWT5XlCqEgddwqQ=s900-c-k-c0x00ffffff-no-rj" group-title="Music & Audio",RDC Gujarati
+https://www.youtube.com/@RDCGujarati/live
+#EXTINF:-1 tvg-chno="3" tvg-id="thelallantop" tvg-logo="https://yt3.googleusercontent.com/CdR2ybs_Tz3mnJANjVWszTsYsSQbVmFUdYnqndK-K7j-tKRYH6Yz8gZpHb5bOvEtgFyHyAzMgQ=s900-c-k-c0x00ffffff-no-rj" group-title="Entertainment & TV",The Lallantop Shows
+https://www.youtube.com/@TheLallantop/live
+#EXTINF:-1 tvg-chno="4" tvg-id="kraftonindiaesports" tvg-logo="https://yt3.googleusercontent.com/j4wyzAfLvBLBu-jSM0_HUvhUWLB6yV-OgEqzt-NGxboR3hFrnyNFq7H_zsQ7RZPEAQFEXT1g6A=s900-c-k-c0x00ffffff-no-rj" group-title="Gaming & Esports",Krafton India Esports
+https://www.youtube.com/@KraftonIndiaEsports/live
+#EXTINF:-1 tvg-chno="5" tvg-id="testbook" tvg-logo="https://yt3.googleusercontent.com/rIIoezC0me5YU30Zi3hfa3c_doa2Kv1sRfxx_xklyqVVwFNryQNNYznbzeigjFhB-nYGmBdx844=s900-c-k-c0x00ffffff-no-rj" group-title="Education & EdTech",Testbook
+https://www.youtube.com/@Testbook/live
+#EXTINF:-1 tvg-chno="6" tvg-id="punjabadda247" tvg-logo="https://yt3.googleusercontent.com/fLV0H-DXRN1HqbERnypC0tv12kiIYs8NJ0w6b3go5wm9Dmwkwwgga9Gd33FVd40aTRPVlOOnhQ=s900-c-k-c0x00ffffff-no-rj" group-title="Education & EdTech",Punjab Adda247
+https://www.youtube.com/@PunjabAdda247/live
+#EXTINF:-1 tvg-chno="7" tvg-id="aajtak" tvg-logo="https://yt3.googleusercontent.com/e8YzAY8Y5P2a068WGiccAx5gJVZjHtVDnJdKoEkp6vMNSy_LzV8kN7Bn8gRIdOf57y8puxwqOpM=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Aaj Tak
 https://www.youtube.com/@aajtak/live
-#EXTINF:-1 tvg-chno="3" tvg-id="ndtv" tvg-logo="https://ui-avatars.com/api/?name=NDTV" group-title="News",NDTV
-https://www.youtube.com/@ndtv/live
-#EXTINF:-1 tvg-chno="4" tvg-id="india_today" tvg-logo="https://ui-avatars.com/api/?name=India%20Today" group-title="News",India Today
-https://www.youtube.com/@indiatoday/live
-#EXTINF:-1 tvg-chno="5" tvg-id="republic_world" tvg-logo="https://ui-avatars.com/api/?name=Republic%20World" group-title="News",Republic World
-https://www.youtube.com/@republicworld/live
-#EXTINF:-1 tvg-chno="6" tvg-id="zee_news" tvg-logo="https://ui-avatars.com/api/?name=Zee%20News" group-title="News",Zee News
-https://www.youtube.com/@zeenews/live
-#EXTINF:-1 tvg-chno="7" tvg-id="abp_news" tvg-logo="https://ui-avatars.com/api/?name=ABP%20News" group-title="News",ABP News
+#EXTINF:-1 tvg-chno="8" tvg-id="abpnews" tvg-logo="https://yt3.googleusercontent.com/cs6p1LSNJDQLhs9abvm8Sc_NT_SG5_6mHQo9ML2CtyIwOcHSDB48W4Apqjrg-LWMXRCXkv4Ai0U=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",ABP News
 https://www.youtube.com/@abpnews/live
-#EXTINF:-1 tvg-chno="8" tvg-id="india_tv" tvg-logo="https://ui-avatars.com/api/?name=India%20TV" group-title="News",India TV
+#EXTINF:-1 tvg-chno="9" tvg-id="indiatv" tvg-logo="https://yt3.googleusercontent.com/8VL4gMfdN2DAnnsyEHUkwxjzIIAs5DcoTeYRQLvS3ExNPu1Op0YsdhY9664A-FXNGScHRKoe=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",India TV
 https://www.youtube.com/@indiatv/live
-#EXTINF:-1 tvg-chno="9" tvg-id="news18_india" tvg-logo="https://ui-avatars.com/api/?name=News18%20India" group-title="News",News18 India
+#EXTINF:-1 tvg-chno="10" tvg-id="zeenews" tvg-logo="https://yt3.googleusercontent.com/TS6ObzI_MXbssyfyx0flQVm28pImVL4sJd1juAqQEiTpU9TOOV9smTFkqEUHzSy5EyEIUCwXmYI=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Zee News
+https://www.youtube.com/@zeenews/live
+#EXTINF:-1 tvg-chno="11" tvg-id="news18india" tvg-logo="https://yt3.googleusercontent.com/-9rj5xq11503L40XuWcrzpG5yogC9Jc8novQEqGgY1bzmnN9sGrvFQbnpz6JmwS6N7FqqdV-=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",News18 India
 https://www.youtube.com/@news18India/live
-#EXTINF:-1 tvg-chno="10" tvg-id="times_now" tvg-logo="https://ui-avatars.com/api/?name=Times%20Now" group-title="News",Times Now
-https://www.youtube.com/@TimesNow/live
-#EXTINF:-1 tvg-chno="11" tvg-id="wion" tvg-logo="https://ui-avatars.com/api/?name=WION" group-title="News",WION
-https://www.youtube.com/@WION/live
-#EXTINF:-1 tvg-chno="12" tvg-id="cnn_news18" tvg-logo="https://ui-avatars.com/api/?name=CNN-News18" group-title="News",CNN-News18
-https://www.youtube.com/@cnnnews18/live
-#EXTINF:-1 tvg-chno="13" tvg-id="republic_bharat" tvg-logo="https://ui-avatars.com/api/?name=Republic%20Bharat" group-title="News",Republic Bharat
+#EXTINF:-1 tvg-chno="12" tvg-id="ndtvindia" tvg-logo="https://yt3.googleusercontent.com/95hhgeU4bzgeSppmif-8A8jveJThMdHMwpx04an-TGYounr7CaViWIOqL4zbT4F0a_Si2bqH=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",NDTV India
+https://www.youtube.com/@ndtvindia/live
+#EXTINF:-1 tvg-chno="13" tvg-id="republicbharat" tvg-logo="https://yt3.googleusercontent.com/AOhO1dXA-M9oWrImpl0WIB5FeH2ufehId3l7oT4Hs-_t-dMtG-jxtQyIKdYmbipR36xXkZSb=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Republic Bharat
 https://www.youtube.com/@RepublicBharat/live
-#EXTINF:-1 tvg-chno="14" tvg-id="zee_business" tvg-logo="https://ui-avatars.com/api/?name=Zee%20Business" group-title="News",Zee Business
-https://www.youtube.com/@zeebusiness/live
-#EXTINF:-1 tvg-chno="15" tvg-id="tv9_bharatvarsh" tvg-logo="https://ui-avatars.com/api/?name=TV9%20Bharatvarsh" group-title="News",TV9 Bharatvarsh
+#EXTINF:-1 tvg-chno="14" tvg-id="tv9bharatvarsh" tvg-logo="https://yt3.googleusercontent.com/F57JVOMEllFYGTb4-JrupgCdIXyET4r5JbWOcDdyDd8K4HUxadP_fgwqRshQj32Ifjso_8gnqVA=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",TV9 Bharatvarsh
 https://www.youtube.com/@TV9Bharatvarsh/live
-#EXTINF:-1 tvg-chno="16" tvg-id="et_now" tvg-logo="https://ui-avatars.com/api/?name=ET%20Now" group-title="News",ET Now
+#EXTINF:-1 tvg-chno="15" tvg-id="timesnownavbharat" tvg-logo="https://yt3.googleusercontent.com/ww29cixBbXhsOQVJOqbKZxgbrXcAmIrdcNV76W305TDatmZ6WiTkJDE-FDmMXLIkwRe9dT28Rg=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Times Now Navbharat
+https://www.youtube.com/@TimesNowNavbharat/live
+#EXTINF:-1 tvg-chno="16" tvg-id="news24thinkfirst" tvg-logo="https://yt3.googleusercontent.com/ktfysjWVQCrBMIO2oQBBR58CAotdLThOhkevLiO7c_qAyVO2kap5LheweBUQt2JIMvC-iKTer0k=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",News24
+https://www.youtube.com/@News24thinkfirst/live
+#EXTINF:-1 tvg-chno="17" tvg-id="newsnationtv" tvg-logo="https://yt3.googleusercontent.com/1jijWURyIcfv7wLs9tdCw-CoqScC6h5BoiTBTkEkmZH3mx7SxCw5ojlqTIb89qbZhfKID7oWfQ=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",News Nation
+https://www.youtube.com/@NewsNationTV/live
+#EXTINF:-1 tvg-chno="18" tvg-id="ddnews" tvg-logo="https://yt3.googleusercontent.com/boJiw31wL-Q7F24kbNug_a7Jr433SUKG32Qg6Saq9b48bCDj5Zlj2wo9cRx3oZ0vCr3L7A_rgw=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",DD News
+https://www.youtube.com/@DDNews/live
+#EXTINF:-1 tvg-chno="19" tvg-id="sansadtv" tvg-logo="https://yt3.googleusercontent.com/XzP36sr6nAhUhEUIWojKUi90bhzafV0Zkmt1vgLuUnk5P8auuDtWHsCNHhR8MznpsT07xVBN=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Sansad TV
+https://www.youtube.com/@SansadTV/live
+#EXTINF:-1 tvg-chno="20" tvg-id="ndtv" tvg-logo="https://yt3.googleusercontent.com/mOb3OXPZO0-7LmZ0Y4o_wz2imPJ7aFa_isYXg0awkLyL1ehglmsiQD4rWxwrUrfXLK9jlh35=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",NDTV
+https://www.youtube.com/@ndtv/live
+#EXTINF:-1 tvg-chno="21" tvg-id="indiatoday" tvg-logo="https://yt3.googleusercontent.com/zmdnM_PEm9R4tR4FL4n2GdTZ3vxFFMTUuxl4Tkw18Okng69ik68jGaoFJnYqdVYlDgJHVr7G9w=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",India Today
+https://www.youtube.com/@indiatoday/live
+#EXTINF:-1 tvg-chno="22" tvg-id="timesnow" tvg-logo="https://yt3.googleusercontent.com/tbt86hlboNiJbdDEbSzJAPxcs8f_NGc9PjowG_nv932vS1TM_o1hKpQBQKlhpVDe-wg9NJFWsg=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Times Now
+https://www.youtube.com/@TimesNow/live
+#EXTINF:-1 tvg-chno="23" tvg-id="republicworld" tvg-logo="https://yt3.googleusercontent.com/FrAieGazV-tntIEPk5M9HbnKOSaWr1UKGBucScJyiHlLNBNQq4H41yWFGCKUDMptraHC0NP7UvA=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Republic World
+https://www.youtube.com/@republicworld/live
+#EXTINF:-1 tvg-chno="24" tvg-id="cnnnews18" tvg-logo="https://yt3.googleusercontent.com/SHQE0Y5rb996mAAUmkQZbJdSWj_rcce07GwKk4LTYkf9PKABaWtCEc_a6SjzZPqOgM8pP4kByXE=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",CNN-News18
+https://www.youtube.com/@cnnnews18/live
+#EXTINF:-1 tvg-chno="25" tvg-id="wion" tvg-logo="https://yt3.googleusercontent.com/evxeFzRem76hjPRh_S_B5MvjNhl4yKjSrIzmvwFx3nyEWHBOPHA4jTum6Yys3HRR0IvYmWud=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",WION (World Is One News)
+https://www.youtube.com/@WION/live
+#EXTINF:-1 tvg-chno="26" tvg-id="mirrornow" tvg-logo="https://yt3.googleusercontent.com/ZCQHmn7fa0wcjO9HzoX3sBee7ez9RcyG_QkGMQT4ooquc0CrulbJoS7FcZ3BlA4kWeOlBZiU8w=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Mirror Now
+https://www.youtube.com/@mirrornow/live
+#EXTINF:-1 tvg-chno="27" tvg-id="etnow" tvg-logo="https://yt3.googleusercontent.com/uNszhFa92_t23EHKYhPxytuNokzFeRq9iilXrMYuQZIyJXTRRTcOlvHFs4tDfQbih-OBhK6OZQ=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",ET NOW
 https://www.youtube.com/@ETNow/live
+#EXTINF:-1 tvg-chno="28" tvg-id="zeebusiness" tvg-logo="https://yt3.googleusercontent.com/sxHEe-On1euLaHO6gssZiJXWQpRgjy7duGBWC9qPmDEul_AfSvthGaGOc3uRZEhTUchMBEOJlp0=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Zee Business
+https://www.youtube.com/@zeebusiness/live
+#EXTINF:-1 tvg-chno="29" tvg-id="cnbcawaaz" tvg-logo="https://yt3.googleusercontent.com/WtM9ZMpGO79fza5Bd0A51JOjsm6rX6_aNMZdw6m1hTv8viMWJo5nvHzWxHg8auRkelGPkCDHCSw=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",CNBC Awaaz
+https://www.youtube.com/@CNBCAwaaz/live
+#EXTINF:-1 tvg-chno="30" tvg-id="theprintindia" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_nMjCtRtaaJl-ksFsk17Qs-BDwF0M_bc7VyO5Mp-aiV1g=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",The Print
+https://www.youtube.com/@ThePrintIndia/live
+#EXTINF:-1 tvg-chno="31" tvg-id="mojostory" tvg-logo="https://yt3.googleusercontent.com/c-KbOFQP2dNkeGdzBWps0omjmKT2otZIjnbYUAp0pD7maaTopzlcrYgHZmfnjqSotof230fVYw=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Mojo Story
+https://www.youtube.com/@MojoStory/live
+#EXTINF:-1 tvg-chno="32" tvg-id="polimernews" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_lsZg5AuszjSq2zyrai2A2B7xUF_e24UZLtXgm5NuK3i1nS=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Polimer News
+https://www.youtube.com/@PolimerNews/live
+#EXTINF:-1 tvg-chno="33" tvg-id="sunnewstamil" tvg-logo="https://yt3.googleusercontent.com/gZqcaonTurPn4M_9uJYdcWPaS5u2fWar8jbDjgjhPWLkmZMi5uLVLimk8QgmOeQTWZxMf28RcA=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Sun News
+https://www.youtube.com/@Sunnewstamil/live
+#EXTINF:-1 tvg-chno="34" tvg-id="thanthitv" tvg-logo="https://yt3.googleusercontent.com/lyUdWpaVvOJQgjI0dfBW29q0PBAFSltmwNX73AYrsbBRt7gFzaALiFzxRYqRWcjhDdQiOSXCog=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Thanthi TV
+https://www.youtube.com/@ThanthiTV/live
+#EXTINF:-1 tvg-chno="35" tvg-id="news18tamilnadu" tvg-logo="https://yt3.googleusercontent.com/wrLMDJVxwbLw_lvrFp16aTKGmRLZdXNrrT0xF9mgljCnZBYK5uJX3fu0TJ2U7EmIx8BP3P8wsQ=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",News18 Tamil Nadu
+https://www.youtube.com/@News18TamilNadu/live
+#EXTINF:-1 tvg-chno="36" tvg-id="news7tamil" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_mBbli8A0yvLlMmketEE-Mftk1c05S4Zhh_urW83cQcz7M=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",News7 Tamil
+https://www.youtube.com/@News7Tamil/live
+#EXTINF:-1 tvg-chno="37" tvg-id="sathiyamtv" tvg-logo="https://yt3.googleusercontent.com/WO0Q9y7nciL5fa0BuVglFXo-llnpfCxa36hPWGx_MYT3_5k85ickclGPJshFeY7Cug_yPBsjjQ=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Sathiyam TV
+https://www.youtube.com/@SathiyamTV/live
+#EXTINF:-1 tvg-chno="38" tvg-id="ntvtelugu" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_mRGOKibahsYRFGyVvIlwWZBEhpAhD2zkHZpydpLgjhPRA=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",NTV Telugu
+https://www.youtube.com/@NTVTelugu/live
+#EXTINF:-1 tvg-chno="39" tvg-id="v6newstelugu" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_kl_HB7RxIxxf262dvKMtFAvjTbaeMTa2mgAjD6IXsZowF5=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",V6 News
+https://www.youtube.com/@V6NewsTelugu/live
+#EXTINF:-1 tvg-chno="40" tvg-id="tnewstelugu" tvg-logo="https://yt3.googleusercontent.com/L1Ms3rUonelxqzYRvFTRvyUUG7sEM467V8EapmU0PaCFk-tm8lNjlRFwbWZDwKQD6XWHGXI0=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",T News
+https://www.youtube.com/@tnewstelugu/live
+#EXTINF:-1 tvg-chno="41" tvg-id="etvtelangana" tvg-logo="https://yt3.googleusercontent.com/ITI7b925M1eAU3qwA6D-LVKjK6cExgmyfBu8KOURiBIxgZREpqkox2IUDSZR1f-2jcn4Gnl2=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",ETV Telangana
+https://www.youtube.com/@etvtelangana/live
+#EXTINF:-1 tvg-chno="42" tvg-id="prime9news" tvg-logo="https://yt3.googleusercontent.com/uIuSMEblpunlTKx33LFbqEmc37f0mP-VIosZ-e5AVFF3oJ3qeiPm8p4FtwEYxSx5jfWTCAzc=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Prime9 News
+https://www.youtube.com/@Prime9News/live
+#EXTINF:-1 tvg-chno="43" tvg-id="asianetnews" tvg-logo="https://yt3.googleusercontent.com/8eItmjbOfJwot8wd0-19KgtvF2ztf4np2qIVfJ1kMPv1ADi6wx9giU62B1j6xO0Ug2Idrqbncg=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Asianet News
+https://www.youtube.com/@AsianetNews/live
+#EXTINF:-1 tvg-chno="44" tvg-id="manoramanews" tvg-logo="https://yt3.googleusercontent.com/ZYxJvUMw4-3IZvUc7JP9IsZjOUbHQv5zJ9Tg4qZqSQF5ly2l28J8xekqgHFL7TtrUe1Rkh1Wsg=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Manorama News
+https://www.youtube.com/@manoramanews/live
+#EXTINF:-1 tvg-chno="45" tvg-id="reporterlive" tvg-logo="https://yt3.googleusercontent.com/bJDd0TLwG0dXlTmaX9RvX1Ch99KMWU8tqpMIXu6W46dNfIS7gK3pC243M--uLOHgPaNKTaQF=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Reporter TV
+https://www.youtube.com/@ReporterLive/live
+#EXTINF:-1 tvg-chno="46" tvg-id="kairalinews" tvg-logo="https://yt3.googleusercontent.com/oYCJSNCRQMinymACQmOVjkQwTvjTXWWAJBwc-M1e00-B2DNgNyZFSrNhd0Lu6oaAKK_V5ZFqwl4=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Kairali News
+https://www.youtube.com/@KairaliNews/live
+#EXTINF:-1 tvg-chno="47" tvg-id="tv9kannada" tvg-logo="https://yt3.googleusercontent.com/EfBMNrivdn1cZ7cJ_yN-Z7pxgx9RCnHUiYBUE2I0yHdxj8Vtf57NUbaQzHlQQqnjOY_D4Apq558=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",TV9 Kannada
+https://www.youtube.com/@tv9kannada/live
+#EXTINF:-1 tvg-chno="48" tvg-id="news18kannada" tvg-logo="https://yt3.googleusercontent.com/lk78XWFfMjRwL4H4R8oiqnZ1Y9b00lo2qbJoRsJItk-jtA9-ENdhtTaKMtNeErVHjP4hxOow_Q=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",News18 Kannada
+https://www.youtube.com/@News18Kannada/live
+#EXTINF:-1 tvg-chno="49" tvg-id="abpmajhatv" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_nD-S56z9X07knh80RdBw0HL-KP7VeHrdN8_NeQs5KrRow=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",ABP Majha
+https://www.youtube.com/@abpmajhatv/live
+#EXTINF:-1 tvg-chno="50" tvg-id="saamtv" tvg-logo="https://yt3.googleusercontent.com/GuGP8Ay1oCoxjUMb39BhQag94I8iGI_koM0vs92l3pb-xjMsuZedB01EvPZOi4K3du5fOif0Bw=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Saam TV
+https://www.youtube.com/@saamtv/live
+#EXTINF:-1 tvg-chno="51" tvg-id="jaimaharashtranews" tvg-logo="https://yt3.googleusercontent.com/Fg8yTegO60PDswXfSjZA01x-xKMypTPa0yRSzbVRb4W9cFBO3ZHhxLZs-DL-YY5VzNwJBiE9Ww=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Jai Maharashtra
+https://www.youtube.com/@JaiMaharashtraNews/live
+#EXTINF:-1 tvg-chno="52" tvg-id="abpanandatv" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_kLTXHZwzmSJJh3W6bm_134dfLEh_vjEpjL8QE8Yn4l6cs=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",ABP Ananda
+https://www.youtube.com/@abpanandatv/live
+#EXTINF:-1 tvg-chno="53" tvg-id="tv9banglalive" tvg-logo="https://yt3.googleusercontent.com/d8QNkJ7Jby9hVSTm67-E4nfbI-7CTgP262NPVGfYpoTZaxLw7uAOPxs5dJtARjEFQijsRsuiFQ=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",TV9 Bangla
+https://www.youtube.com/@Tv9BanglaLive/live
+#EXTINF:-1 tvg-chno="54" tvg-id="news18bangla" tvg-logo="https://yt3.googleusercontent.com/0pVAsTdgTX-iREI9xZUMsYbqjpclujOiC7mocZIvLlWYVmhKRP131kzwVzM-i63lQz2YMMXo=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",News18 Bangla
+https://www.youtube.com/@News18Bangla/live
+#EXTINF:-1 tvg-chno="55" tvg-id="gstvnews" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_nsAFxU0NVmz2S9PQQfI-AxiFp56-2tl81jp7Hb4HUfUQ=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",GSTV News
+https://www.youtube.com/@GSTVNEWS/live
+#EXTINF:-1 tvg-chno="56" tvg-id="otvodisha" tvg-logo="https://yt3.googleusercontent.com/ffzPGJRgaoJjoJOrZf_gG2YTW8GS_r_2H3Fz5rT9Iil_PXvuM_Cbhxmj8f3HwqaKAqfNRlpG=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",OTV (Odisha TV)
+https://www.youtube.com/@otvodisha/live
+#EXTINF:-1 tvg-chno="57" tvg-id="kanaknewsodisha" tvg-logo="https://yt3.googleusercontent.com/6EoB8KwfTAjvQ6H33qjsdr4-GPa0f3wVoqNp5z-Oi3O2tZ-tYLgXryWA-9h4Pd2igkcPM1VkkA=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Kanak News
+https://www.youtube.com/@KanakNewsOdisha/live
+#EXTINF:-1 tvg-chno="58" tvg-id="oneindiahindi" tvg-logo="https://yt3.googleusercontent.com/o2gDaWm3Pot7xSZz1dmX9Ha6ji7T6VKAJIkmpPoRly1Zc7BsDoyo9JvnLVfXYs0v9zbiJ0l4=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Oneindia Hindi
+https://www.youtube.com/@OneindiaHindi/live
+#EXTINF:-1 tvg-chno="59" tvg-id="bbchindi" tvg-logo="https://yt3.googleusercontent.com/eRn3COY-otYqOxgZ7Kz3sH1xu_x0wEMm6RmZgmubzjxTrWAX57F7HerZ_Q5VcOE4FkbfxRIjW4k=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",BBC News Hindi Official
+https://www.youtube.com/@BBCHindi/live
+#EXTINF:-1 tvg-chno="60" tvg-id="news18rajasthan" tvg-logo="https://yt3.googleusercontent.com/xIJSgMJGzG1RMformQj_mdyl0Xf9wihKmpPpTmXsVDjH2S_pp80OcITIL8HVL8ZuxsnbqtJVxzg=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",News18 Rajasthan
+https://www.youtube.com/@News18Rajasthan/live
+#EXTINF:-1 tvg-chno="61" tvg-id="news18mpchhattisgarh" tvg-logo="https://yt3.googleusercontent.com/Y8aFJxC0NMZbPDFfGfRLr1ymVHgujMpnbdzUrMEv8M3KWFt7EmgCgA17T4f5AsKCKzVdK1tBhQ=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",News18 MP Chhattisgarh
+https://www.youtube.com/@News18MPChhattisgarh/live
+#EXTINF:-1 tvg-chno="62" tvg-id="news18biharjharkhand" tvg-logo="https://yt3.googleusercontent.com/jX8TjvcMC3z7GCapfJiJNrSEHH5gmaJsKO0pRzXPel00mbyzCrbFaB62NLsFJ5DL_iaBifKJ=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",News18 Bihar Jharkhand
+https://www.youtube.com/@News18BiharJharkhand/live
+#EXTINF:-1 tvg-chno="63" tvg-id="news18uputtarakhand" tvg-logo="https://yt3.googleusercontent.com/qf5BdXxgdMXutHsPx7Y9QH-EFfhA-8hkHNPPbYtMfj9SQWyQxEjlq4EYUtdmn52zQ5mUwG29dg=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",News18 UP Uttarakhand
+https://www.youtube.com/@News18UPUttarakhand/live
+#EXTINF:-1 tvg-chno="64" tvg-id="zeerajasthannews" tvg-logo="https://yt3.googleusercontent.com/CqBwhwPCfGMMlZK1L0Sluelx6cA-RqN5nEZb2Uihy8JZupeU-12Gfyvw93o53SgOHpnBBW4xXkg=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Zee Rajasthan
+https://www.youtube.com/@ZeeRajasthanNews/live
+#EXTINF:-1 tvg-chno="65" tvg-id="zeebiharjharkhand" tvg-logo="https://yt3.googleusercontent.com/Tc7Ad0aVG60qoHUKbCu8bK9t6gRBZvSPauIDEIYhadkUHnT9r9hp-Q38aRYkkjYRgWJaHP-EbA=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Zee Bihar Jharkhand
+https://www.youtube.com/@ZeeBiharJharkhand/live
+#EXTINF:-1 tvg-chno="66" tvg-id="chuchutv" tvg-logo="https://yt3.googleusercontent.com/9HW0sh3SxpygY7QohdMTkUfNToJHJR1M_C1UYevboxlesumkq84nMLo1RT0JI0NYb7dqv2kHUMM=s900-c-k-c0x00ffffff-no-rj" group-title="Kids & Animation",ChuChu TV Nursery Rhymes
+https://www.youtube.com/@ChuChuTV/live
+#EXTINF:-1 tvg-chno="67" tvg-id="kidschannelindia" tvg-logo="https://yt3.googleusercontent.com/hZYF-Hz4YJp36GJZamItXW6PXGapw5p0nAneFgaRcTYymJLvWpXE0tF7SubIzv_rKa3HVgECN2g=s900-c-k-c0x00ffffff-no-rj" group-title="Kids & Animation",Kids Channel India
+https://www.youtube.com/@KidsChannelIndia/live
+#EXTINF:-1 tvg-chno="68" tvg-id="littletreehouseindia" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_lh0zur4rENkfQX1M3GWDsFczQD_J3X9OCTn5wrJvbMeQ=s900-c-k-c0x00ffffff-no-rj" group-title="Kids & Animation",Little Treehouse India
+https://www.youtube.com/@LittleTreehouseIndia/live
+#EXTINF:-1 tvg-chno="69" tvg-id="sadhnatv" tvg-logo="https://yt3.googleusercontent.com/wn9tpIDiysn_2iNS6bnLKVpd2y3hANJRSgG1HDQFDBxmhA48QswOgaNNIr0zwwIyQfBlIf5J=s900-c-k-c0x00ffffff-no-rj" group-title="Devotional & Spiritual",Sadhna TV
+https://www.youtube.com/@sadhnatv/live
+#EXTINF:-1 tvg-chno="70" tvg-id="satsangtv" tvg-logo="https://yt3.googleusercontent.com/kngP8WOH7_VGkF_rpGTKLN4HVQ9E0HyZR101jTAVXhfi7QCPkikuwTpE9xXzh75Z0KFvI_sd=s900-c-k-c0x00ffffff-no-rj" group-title="Devotional & Spiritual",Satsang TV
+https://www.youtube.com/@satsangtv/live
+#EXTINF:-1 tvg-chno="71" tvg-id="iskconbangalore" tvg-logo="https://yt3.googleusercontent.com/c53RlDdbi5XR9eUVOuNlT9YWd8LuTu_hsd0uHuGZuUJBDWfQqPMN-0bGuO0nQQiidkeuSbA0Gn0=s900-c-k-c0x00ffffff-no-rj" group-title="Devotional & Spiritual",ISKCON Bangalore
+https://www.youtube.com/@iskconbangalore/live
+#EXTINF:-1 tvg-chno="72" tvg-id="svbcttd" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_mfAUc7DTGQgkazQJiDcL764YmHHKo2gWxxLtAALOIJm4I=s900-c-k-c0x00ffffff-no-rj" group-title="Devotional & Spiritual",SVBC TTD
+https://www.youtube.com/@svbcttd/live
+#EXTINF:-1 tvg-chno="73" tvg-id="sgpcsriamritsar" tvg-logo="https://yt3.googleusercontent.com/3U6oZLg2--hoChqjRwcs4t_2Yk0x91bdi6Nc9Aw_OMF5-MlEmundJgu7D6F7glP_y7UxScgF=s900-c-k-c0x00ffffff-no-rj" group-title="Devotional & Spiritual",SGPC Sri Amritsar
+https://www.youtube.com/@sgpcsriamritsar/live
+#EXTINF:-1 tvg-chno="74" tvg-id="bageshwardhamsarkar" tvg-logo="https://yt3.googleusercontent.com/yXP8PiQiER8jXlK-Satj4wLMDLeuEyKfzMMWtZnpGhXumBTiIv0DNLJO8ApWcLJuprJ9l2CSH9Y=s900-c-k-c0x00ffffff-no-rj" group-title="Devotional & Spiritual",Bageshwar Dham Sarkar
+https://www.youtube.com/@BageshwarDhamSarkar/live
+#EXTINF:-1 tvg-chno="75" tvg-id="ddkisan" tvg-logo="https://yt3.googleusercontent.com/JWh-x9MIrdjXUHzYEJxXjDhCE74Nm2dxVEom3hURrX6WdnIDhEgL5nCpWYTcrvugfBo5_iXrGQ=s900-c-k-c0x00ffffff-no-rj" group-title="Agriculture & Farming",Doordarshan Kisan
+https://www.youtube.com/@DDKisan/live
+#EXTINF:-1 tvg-chno="76" tvg-id="aljazeeraenglish" tvg-logo="https://yt3.googleusercontent.com/XsTga3Nsfc1E6ZgC6HfHfzTG_3zhuZleOnsKxSK2aILMjwkkIm-0vdALFaU-yt0Lw07iLtbSifk=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Al Jazeera English
+https://www.youtube.com/@AlJazeeraEnglish/live
+#EXTINF:-1 tvg-chno="77" tvg-id="dwnews" tvg-logo="https://yt3.googleusercontent.com/NSOdTQTWlqMy8O_j32dx-ftfTCHMOt04Hm7KZ4pfAK6-eQzQSZMWvvss90kG8KQfJ7iNP3phyA=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",DW News
+https://www.youtube.com/@dwnews/live
+#EXTINF:-1 tvg-chno="78" tvg-id="skynews" tvg-logo="https://yt3.googleusercontent.com/dGnkztdrLtXRlzkdqReeL-NES2761xxmNVcJhGKqFpR0vQBoP9XaxnXF95FDpwrjyFr2iJvV8Es=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Sky News
+https://www.youtube.com/@SkyNews/live
+#EXTINF:-1 tvg-chno="79" tvg-id="france24_en" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_n_QTJ5-GLGnftQFkb7Kp36W2eBH3H-7ZqTQxzFkkqGrIE=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",FRANCE 24 English
+https://www.youtube.com/@France24_en/live
+#EXTINF:-1 tvg-chno="80" tvg-id="abcnews" tvg-logo="https://yt3.googleusercontent.com/GJ8V0NX6NddGh9bf4zED4tsjPjjBK2hdp5FWHMy09pV7sdSkkE3yEhCRSch4waEb9ZavyUrWfw=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",ABC News
+https://www.youtube.com/@ABCNews/live
+#EXTINF:-1 tvg-chno="81" tvg-id="nbcnews" tvg-logo="https://yt3.googleusercontent.com/PJj5jtuEOi5UmkFy4IBonj5WcabNcnJAIJe-jZMd1ArwIuVyQxFH_2zryBHwvfv6mJujwRpWDCM=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",NBC News
+https://www.youtube.com/@NBCNews/live
+#EXTINF:-1 tvg-chno="82" tvg-id="trtworld" tvg-logo="https://yt3.googleusercontent.com/luLQWmGFG4iDC1U_2JlzZ1mquci_sUdfZfFl4eWgBkDpW6tvZT0MEA4c4JebJdi9hCo518q1=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",TRT World
+https://www.youtube.com/@TRTWorld/live
+#EXTINF:-1 tvg-chno="83" tvg-id="channelnewsasia" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_n00DzE39o-4IFJ07IP3gG__TMqKxXXbwYaARinwTXTDFM=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",CNA
+https://www.youtube.com/@ChannelNewsAsia/live
+#EXTINF:-1 tvg-chno="84" tvg-id="euronews" tvg-logo="https://yt3.googleusercontent.com/8MyE7rxMBfLZOpYkJVJFm1C8I9jxbceBbOJS9OhrepZMVGxGV-OEJU-UdLOew_qR_l-knETWeu4=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",euronews
+https://www.youtube.com/@euronews/live
+#EXTINF:-1 tvg-chno="85" tvg-id="nhkworldjapan" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_m9YDtPWqgZW91_-QTdsVWLbnR0ZQ1BaHX38ZcSRVGnfd0=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",NHK WORLD-JAPAN
+https://www.youtube.com/@NHKWORLDJAPAN/live
+#EXTINF:-1 tvg-chno="86" tvg-id="yahoofinance" tvg-logo="https://yt3.googleusercontent.com/Z6BMAACHMcGAFniv21LArJ3gc2nFDpjP4QAmEuTxUi3VZLBbkNH2Hqc3n2rIvCbVVJQ8lnCjsg=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Yahoo Finance
+https://www.youtube.com/@yahoofinance/live
+#EXTINF:-1 tvg-chno="87" tvg-id="etnowswadesh" tvg-logo="https://yt3.googleusercontent.com/Kdr2tyqYr9NSsQZpM3qi6P-y8yBV-fii4A9RakN4Hp91dVT1J_V8LBPQZ4UWq4InS_6pVd7z3nQ=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",ET Now Swadesh
+https://www.youtube.com/@etnowswadesh/live
+#EXTINF:-1 tvg-chno="88" tvg-id="tv9telugulive" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_kINV9J3l1Tq1kyefK7yNS0-IkKG3AONgiu6HmUc19JjMs=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",TV9 Telugu Live
+https://www.youtube.com/@TV9TeluguLive/live
+#EXTINF:-1 tvg-chno="89" tvg-id="abntelugutv" tvg-logo="https://yt3.googleusercontent.com/GOUJFhDsIS8NThKT15glg5g4X-AT1N5ggPk-J24Nf8g3zMpqxWoqcfQRZNzQ-uygy9C9PPDF4Q=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",ABN Telugu
+https://www.youtube.com/@abntelugutv/live
+#EXTINF:-1 tvg-chno="90" tvg-id="sakshitv" tvg-logo="https://yt3.googleusercontent.com/0gFVzPt-RKuJKoRQUnrbQ2fQxwT1p5O86t8xxKN1klHvnzlO8Ux4l2pKv6Wj8QsPBFpfeMFc5Q=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Sakshi TV
+https://www.youtube.com/@sakshitv/live
+#EXTINF:-1 tvg-chno="91" tvg-id="zee24taas" tvg-logo="https://yt3.googleusercontent.com/RRbXQPXK-tt6J8ewGJ2QMc_omiWW_nIJ_5ST1FXtrgZ-zFm8HbYQPX_Fxih5HSXf4bwTfgkzgoE=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",Zee 24 Taas
+https://www.youtube.com/@zee24taas/live
+#EXTINF:-1 tvg-chno="92" tvg-id="tv9marathilive" tvg-logo="https://yt3.googleusercontent.com/HB8cDZ8136P8A3e-YlAYHN8hsSIqfFweGFkXT_ZUi_3iRozZiLoUwCjTYHzFx10KSD1x7MMcKw=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",TV9 Marathi
+https://www.youtube.com/@tv9marathilive/live
+#EXTINF:-1 tvg-chno="93" tvg-id="ptcnews" tvg-logo="https://yt3.googleusercontent.com/nI9wmNT-LY0UTSamnSf7pPmNz3n4k6hzoKNUXRvgczPlqO8PV24RDEZc3bp8bfWhGcl9rhuU=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",PTC News
+https://www.youtube.com/@ptcnews/live
+#EXTINF:-1 tvg-chno="94" tvg-id="abpsanjha" tvg-logo="https://yt3.googleusercontent.com/-9RmhoNoynHExf5Z-lrbQfHuyD_uQI-fZFcyH__liOkQyaEGLEuuHD8LpVmjIYKo2_NREV9B2g=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",ABP Sanjha
+https://www.youtube.com/@abpsanjha/live
+#EXTINF:-1 tvg-chno="95" tvg-id="abpasmitatv" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_meCTUeTxHbDx3XpS-8_ln6hhvooqglYFraPYYjSWyDv8U=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",ABP Asmita
+https://www.youtube.com/@abpasmitatv/live
+#EXTINF:-1 tvg-chno="96" tvg-id="tv9gujaratinews" tvg-logo="https://yt3.googleusercontent.com/xASQIwUh2dmN1SKEIc81oEUrce2GA_tckdiQcaioGp6wSoEbkTp0PUOZbF6xZ4olgTeavqvtwT8=s900-c-k-c0x00ffffff-no-rj" group-title="News & Current Affairs",TV9 Gujarati
+https://www.youtube.com/@TV9GujaratiNews/live
+#EXTINF:-1 tvg-chno="97" tvg-id="vaticannewsen" tvg-logo="https://yt3.googleusercontent.com/C9EQFDr00NvN4mdOlKHefnpSwkUUMyg_YPWrEaW_AIhGtHEGBOTUT3UYBxlzYdyQ1h6i-niRCRE=s900-c-k-c0x00ffffff-no-rj" group-title="Devotional & Spiritual",Vatican News - English
+https://www.youtube.com/@VaticanNewsEN/live
+#EXTINF:-1 tvg-chno="98" tvg-id="lofigirl" tvg-logo="https://yt3.googleusercontent.com/GyVPysrx-cVIWIQDfi2MkaYr7oRIxuOgGeZihnw-hgTv6E5LBQ67v5yXTFvqP2Bl7BB_S-0L-A=s900-c-k-c0x00ffffff-no-rj" group-title="Music & Audio",Lofi Girl
+https://www.youtube.com/@LofiGirl/live
+#EXTINF:-1 tvg-chno="99" tvg-id="chillhopmusic" tvg-logo="https://yt3.googleusercontent.com/5sz00tGeNdll17IqVECF7s7shUzz0nlirAK86WgY0yz7-4t2S51_XMvjM7HaJfdwNlM6rm_Hrg=s900-c-k-c0x00ffffff-no-rj" group-title="Music & Audio",Chillhop Music
+https://www.youtube.com/@ChillhopMusic/live
+#EXTINF:-1 tvg-chno="100" tvg-id="cafemusicbgmchannel" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_nrs6F_WGx11R1J9rjfsjgDnUJPb0F38JzM1g70q7JLCls=s900-c-k-c0x00ffffff-no-rj" group-title="Music & Audio",Cafe Music BGM channel
+https://www.youtube.com/@CafeMusicBGMchannel/live
+#EXTINF:-1 tvg-chno="101" tvg-id="yellowbrickcinema" tvg-logo="https://yt3.googleusercontent.com/LTBo76IZeOGBksUuAyzPu4Rruj-O6Jv6GjXtyQCvgjrMQC7neOcEjVAorRDkzvTfofmdhdXt=s900-c-k-c0x00ffffff-no-rj" group-title="Music & Audio",Yellow Brick Cinema - Relaxing Music
+https://www.youtube.com/@YellowBrickCinema/live
+#EXTINF:-1 tvg-chno="102" tvg-id="nasa" tvg-logo="https://yt3.googleusercontent.com/eIf5fNPcIcj9ig-wZBeq4stFy1lgjWTW1nLT5dYlFkHZprZ03QBiMcbpwNMB6XSBjrSFGtAGQg=s900-c-k-c0x00ffffff-no-rj" group-title="Nature & Earth",NASA
+https://www.youtube.com/@NASA/live
+#EXTINF:-1 tvg-chno="103" tvg-id="explorebirds" tvg-logo="https://yt3.googleusercontent.com/WOBxHKY3hBgAsobag1fRK3qJwOB-V3t_972w85tvlKs6FA990ACejkxtg9VXeopsTFUprWz2=s900-c-k-c0x00ffffff-no-rj" group-title="Nature & Earth",Explore Birds Bats Bees
+https://www.youtube.com/@ExploreBirds/live
+#EXTINF:-1 tvg-chno="104" tvg-id="exploreoceans" tvg-logo="https://yt3.googleusercontent.com/xc_rKn2JbOl667ynekGTkjvw9SKUU2BhtiJX9Qv9xAjhMgAuDDz-chIQwf-I5EUnq7t8vFfFUw=s900-c-k-c0x00ffffff-no-rj" group-title="Nature & Earth",Explore Oceans
+https://www.youtube.com/@ExploreOceans/live
+#EXTINF:-1 tvg-chno="105" tvg-id="explorezenden" tvg-logo="https://yt3.googleusercontent.com/f65HhIHepe3MEV8jUzYzUF-ydvxzVBjURyqYGhE_vDFsjyDXY45AvWIOo0HcPHPdp0WKBvKpZwQ=s900-c-k-c0x00ffffff-no-rj" group-title="Nature & Earth",Explore Zen Den
+https://www.youtube.com/@ExploreZenDen/live
+#EXTINF:-1 tvg-chno="106" tvg-id="earthcam" tvg-logo="https://yt3.googleusercontent.com/PfomW17xQMZC2KTaK7xF_Oa2A_BFYwHkOW4ZA2pjLQ0V5Hvn-VaT6vPYnJWOIqWaMbRiubg7WQ=s900-c-k-c0x00ffffff-no-rj" group-title="Nature & Earth",EarthCam
+https://www.youtube.com/@earthcam/live
+#EXTINF:-1 tvg-chno="107" tvg-id="ptztv" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_kXBtG4JVZ-1zrm0Ta9a9JQm5-vdo4VPjD1Se3MWxrnUsU=s900-c-k-c0x00ffffff-no-rj" group-title="Nature & Earth",PTZtv
+https://www.youtube.com/@PTZtv/live
+#EXTINF:-1 tvg-chno="108" tvg-id="annnewsch" tvg-logo="https://yt3.googleusercontent.com/YNCCp1NNe4z2aL7Iv82YHL8qKYmU6uOSn8NKep4qKRBK_E2XJCF5evjRiArUbs-gmLX2dnwtIQ=s900-c-k-c0x00ffffff-no-rj" group-title="Nature & Earth",ANNnewsCH
+https://www.youtube.com/@ANNnewsCH/live
+#EXTINF:-1 tvg-chno="109" tvg-id="montereybayaquarium" tvg-logo="https://yt3.googleusercontent.com/QQzt4UB9VlT5zHh_PgEFlfYohvaps1_ZlPLcutwDI3A3koJgZsH-rFRFqJ81N3M45UDKsdL9yg=s900-c-k-c0x00ffffff-no-rj" group-title="Nature & Earth",Monterey Bay Aquarium
+https://www.youtube.com/@montereybayaquarium/live
+#EXTINF:-1 tvg-chno="110" tvg-id="wsl" tvg-logo="https://yt3.googleusercontent.com/YQoVzEJ1DqlXxZO4l5ITeNWJT_6oHJQzzEjEU0YWmusfI-MoB3NfhR-SI3amNo4fxb1x8a9wHw=s900-c-k-c0x00ffffff-no-rj" group-title="Sports",World Surf League
+https://www.youtube.com/@WSL/live
+#EXTINF:-1 tvg-chno="111" tvg-id="chess" tvg-logo="https://yt3.googleusercontent.com/ce_EvpNlsbZTXRNLOoDVy8ZhHZcYEHVHefwdg9d0x7BZAk5AGXFteEILFmrBnGF_LLvE1HEU3LE=s900-c-k-c0x00ffffff-no-rj" group-title="Sports",Chess.com
+https://www.youtube.com/@chess/live
+#EXTINF:-1 tvg-chno="112" tvg-id="fide_chess" tvg-logo="https://yt3.googleusercontent.com/aRTfVhqRaP4cRf_POiqyRalh3hgeP-cIrdCsTj70twMk5f1iQtEAZTWQbJ_YvJiavES6up6Sgr8=s900-c-k-c0x00ffffff-no-rj" group-title="Sports",FIDE Chess
+https://www.youtube.com/@FIDE_chess/live
+#EXTINF:-1 tvg-chno="113" tvg-id="nasaspaceflight" tvg-logo="https://yt3.googleusercontent.com/nDf29MGJSu5YrnAAdL2ofQsOTaOb74D7ILcgIr_7xJNJMSaGMcv5I366SF32oSUM7VO6PHYQpQ=s900-c-k-c0x00ffffff-no-rj" group-title="Science & Technology",NASASpaceflight
+https://www.youtube.com/@NASASpaceflight/live
+#EXTINF:-1 tvg-chno="114" tvg-id="evnautilus" tvg-logo="https://yt3.googleusercontent.com/ytc/AIdro_kKjGvxX-jvD7lqjH2Fk-QncoL_gNuqKRM-n1j7ZALmhSI=s900-c-k-c0x00ffffff-no-rj" group-title="Science & Technology",EVNautilus
+https://www.youtube.com/@EVNautilus/live
